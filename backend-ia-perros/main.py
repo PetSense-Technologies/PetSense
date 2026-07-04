@@ -12,6 +12,7 @@ import models
 from datetime import date, timedelta
 from sqlalchemy import func
 from fastapi import Form
+from fastapi import Query
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -43,12 +44,15 @@ def inicio():
 @app.post("/predict")
 async def predict_emotion(
     file: UploadFile = File(...), 
-    mascota_id: int = Form(None),  # <--- Cambiado a Form para capturar desde FormData del front si es necesario
+    mascota_id: int = Form(None),  # Lo busca en el Form Body si viene ahí
+    mascota_id_query: int = Query(None, alias="mascota_id"), # ¡NUEVO! Lo busca en la URL (?mascota_id=1)
     db: Session = Depends(database.get_db)
 ):
     try:
-        # Si no viene por Form, intentamos capturarlo por Query String por si acaso
-        # Esto asegura compatibilidad total con cómo lo envíe tu React Native
+        # Unificamos los dos posibles orígenes del ID de la mascota
+        # Si vino en la URL, usamos ese; si no, usamos el del formulario
+        id_final = mascota_id_query if mascota_id_query is not None else mascota_id
+
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -93,11 +97,11 @@ async def predict_emotion(
             nombre_emocion = "INDEFINIDO"
             confianza = 0.0
 
-        print(f"Intentando procesar escaneo. mascota_id recibido: {mascota_id}")
+        print(f"Intentando procesar escaneo. mascota_id resuelto final: {id_final}")
 
         # PERSISTENCIA EN BASE DE DATOS Y RACHAS
-        if mascota_id:
-            db_mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
+        if id_final:
+            db_mascota = db.query(models.Mascota).filter(models.Mascota.id == id_final).first()
             if db_mascota:
                 hoy = date.today()
                 
@@ -113,23 +117,23 @@ async def predict_emotion(
                     
                     db_mascota.ultima_racha_update = hoy
                 except Exception as racha_err:
-                    print(f"Advertencia en racha: {racha_err}")
+                    print(f"⚠️ Advertencia en racha: {racha_err}")
 
                 emocion_formateada = nombre_emocion.strip().capitalize()
 
                 nuevo_escaneo = models.HistorialEscaneo(
-                    mascota_id=mascota_id,
+                    mascota_id=id_final,
                     emocion=emocion_formateada,
                     confianza=round(confianza, 2),
                     embedding_sample=string_sample
                 )
                 db.add(nuevo_escaneo)
                 db.commit()
-                print(f"¡Escaneo guardado exitosamente en la base de datos para la mascota ID {mascota_id}!")
+                print(f"¡Escaneo guardado exitosamente en la base de datos para la mascota ID {id_final}!")
             else:
-                print(f"ERROR: Se recibió el mascota_id {mascota_id}, pero NO EXISTE ninguna mascota con ese ID en la base de datos.")
+                print(f"ERROR: Se resolvió el mascota_id {id_final}, pero NO EXISTE en la base de datos.")
         else:
-            print("ADVERTENCIA: El endpoint /predict no recibió ningún mascota_id (llegó None).")
+            print("ADVERTENCIA: No se pudo resolver el mascota_id por ningún medio (Query o Form).")
 
         return {
             "status": "success",
