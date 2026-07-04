@@ -11,6 +11,7 @@ import database
 import models
 from datetime import date, timedelta
 from sqlalchemy import func
+from fastapi import Form
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -42,10 +43,12 @@ def inicio():
 @app.post("/predict")
 async def predict_emotion(
     file: UploadFile = File(...), 
-    mascota_id: int = None,  # Agregamos esto para saber a quién guardar
+    mascota_id: int = Form(None),  # <--- Cambiado a Form para capturar desde FormData del front si es necesario
     db: Session = Depends(database.get_db)
 ):
     try:
+        # Si no viene por Form, intentamos capturarlo por Query String por si acaso
+        # Esto asegura compatibilidad total con cómo lo envíe tu React Native
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -77,7 +80,7 @@ async def predict_emotion(
         res_embed = clasificador_emociones(recorte_efectivo, embed=[10], verbose=False)
         embedding_vector = res_embed[0].tolist() 
         dimension_vector = len(embedding_vector)
-        string_sample = str(embedding_vector[:5]) # Muestra compacta para la base de datos
+        string_sample = str(embedding_vector[:5])
 
         # INFERENCIA
         res_cls = clasificador_emociones(recorte_efectivo, verbose=False)
@@ -90,19 +93,19 @@ async def predict_emotion(
             nombre_emocion = "INDEFINIDO"
             confianza = 0.0
 
+        print(f"Intentando procesar escaneo. mascota_id recibido: {mascota_id}")
+
         # PERSISTENCIA EN BASE DE DATOS Y RACHAS
         if mascota_id:
             db_mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
             if db_mascota:
                 hoy = date.today()
                 
-                # Convertimos de forma segura la fecha de la racha a string para evitar líos con SQLite
                 ultima_racha_str = str(db_mascota.ultima_racha_update) if db_mascota.ultima_racha_update else None
                 ayer_str = str(hoy - timedelta(days=1))
                 hoy_str = str(hoy)
 
                 try:
-                    # Lógica de rachas usando strings limpios
                     if ultima_racha_str == ayer_str:
                         db_mascota.racha_actual += 1
                     elif ultima_racha_str != hoy_str:
@@ -110,12 +113,10 @@ async def predict_emotion(
                     
                     db_mascota.ultima_racha_update = hoy
                 except Exception as racha_err:
-                    print(f"Advertencia en cálculo de racha (se ignora para guardar el escaneo): {racha_err}")
+                    print(f"Advertencia en racha: {racha_err}")
 
-                # Guardamos la emoción para que coincida con tu front-end
                 emocion_formateada = nombre_emocion.strip().capitalize()
 
-                # Registro en el historial
                 nuevo_escaneo = models.HistorialEscaneo(
                     mascota_id=mascota_id,
                     emocion=emocion_formateada,
@@ -124,7 +125,11 @@ async def predict_emotion(
                 )
                 db.add(nuevo_escaneo)
                 db.commit()
-                print(f"Escaneo guardado con éxito para mascota ID {mascota_id}: {emocion_formateada}")
+                print(f"¡Escaneo guardado exitosamente en la base de datos para la mascota ID {mascota_id}!")
+            else:
+                print(f"ERROR: Se recibió el mascota_id {mascota_id}, pero NO EXISTE ninguna mascota con ese ID en la base de datos.")
+        else:
+            print("ADVERTENCIA: El endpoint /predict no recibió ningún mascota_id (llegó None).")
 
         return {
             "status": "success",
@@ -136,7 +141,7 @@ async def predict_emotion(
         
     except Exception as e:
         db.rollback()
-        print(f"Error interno: {str(e)}")
+        print(f"Error interno en /predict: {str(e)}")
         return {"status": "error", "message": str(e)}
     
 @app.post("/mascotas/registro")
