@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-// ⚠️ REEMPLAZA ESTO CON TU DIRECCIÓN IPV4 QUE SACASTE DEL IPCONFIG
+// CONEXIÓN VIA DIRECCIÓN IPV4
 const API_URL = 'http://192.168.18.3:8000/predict';
 
 export default function CameraScreen() {
@@ -10,9 +10,9 @@ export default function CameraScreen() {
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
 
-  // Función para seleccionar o tomar la foto
+  // Seleccionar o tomar la foto
   const seleccionarImagen = async () => {
-    // Solicitar permisos de la galería/cámara
+    // Permisos de la galería/cámara
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a tus fotos para analizar al perrito.');
@@ -34,7 +34,7 @@ export default function CameraScreen() {
     }
   };
 
-  // Enviar el archivo mediante FormData al Backend de Python
+  // Enviar el archivo mediante FormData al Backend
   const enviarABackend = async (uri) => {
     setLoading(true);
 
@@ -75,7 +75,7 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Analizador de Emociones Caninas 🐾</Text>
+      <Text style={styles.title}>Analizador de Emociones Caninas</Text>
 
       {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
 
@@ -91,7 +91,7 @@ export default function CameraScreen() {
           <Text style={styles.resultText}>Estado: {resultado.emotion}</Text>
           <Text style={styles.resultText}>Confianza: {resultado.confidence}%</Text>
           {resultado.detection_fallback_applied && (
-            <Text style={styles.fallbackText}>⚠️ Nota: Se aplicó encuadre de seguridad central.</Text>
+            <Text style={styles.fallbackText}> Nota: Se aplicó encuadre de seguridad central.</Text>
           )}
         </View>
       )}
