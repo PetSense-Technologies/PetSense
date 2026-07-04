@@ -10,6 +10,7 @@ from fastapi import Depends
 import database
 import models
 from datetime import date, timedelta
+from sqlalchemy import func
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -152,4 +153,38 @@ def registrar_mascota_completa(
         return {"status": "success", "mascota_id": nueva_mascota.id, "message": "Registro completado exitosamente"}
     except Exception as e:
         db.rollback()
+        return {"status": "error", "message": str(e)}
+    
+
+# CONSULTA DESDE REACT NATIVE
+
+@app.get("/mascotas/{mascota_id}/perfil")
+def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
+    try:
+        mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
+        if not mascota:
+            return {"status": "error", "message": "Mascota no encontrada"}
+        
+        # Obtener el conteo total de escaneos reales
+        total_escaneos = db.query(models.HistorialEscaneo).filter(
+            models.HistorialEscaneo.mascota_id == mascota_id
+        ).count()
+        
+        # Obtener la última emoción registrada
+        ultimo_escaneo = db.query(models.HistorialEscaneo).filter(
+            models.HistorialEscaneo.mascota_id == mascota_id
+        ).order_by(models.HistorialEscaneo.fecha.desc()).first()
+        
+        ultima_emocion = ultimo_escaneo.emocion.capitalize() if ultimo_escaneo else "Indefinido"
+
+        return {
+            "status": "success",
+            "nombre": mascota.nombre_mascota,
+            "raza": mascota.raza,
+            "edad": mascota.edad_meses, 
+            "racha_actual": mascota.racha_actual,
+            "total_escaneos": total_escaneos,
+            "ultima_emocion": ultima_emocion
+        }
+    except Exception as e:
         return {"status": "error", "message": str(e)}
