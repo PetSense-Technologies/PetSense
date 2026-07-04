@@ -95,23 +95,36 @@ async def predict_emotion(
             db_mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
             if db_mascota:
                 hoy = date.today()
-                # Racha
-                if db_mascota.ultima_racha_update == hoy - timedelta(days=1):
-                    db_mascota.racha_actual += 1
-                elif db_mascota.ultima_racha_update != hoy:
-                    db_mascota.racha_actual = 1
                 
-                db_mascota.ultima_racha_update = hoy
-                
+                # Convertimos de forma segura la fecha de la racha a string para evitar líos con SQLite
+                ultima_racha_str = str(db_mascota.ultima_racha_update) if db_mascota.ultima_racha_update else None
+                ayer_str = str(hoy - timedelta(days=1))
+                hoy_str = str(hoy)
+
+                try:
+                    # Lógica de rachas usando strings limpios
+                    if ultima_racha_str == ayer_str:
+                        db_mascota.racha_actual += 1
+                    elif ultima_racha_str != hoy_str:
+                        db_mascota.racha_actual = 1
+                    
+                    db_mascota.ultima_racha_update = hoy
+                except Exception as racha_err:
+                    print(f"⚠️ Advertencia en cálculo de racha (se ignora para guardar el escaneo): {racha_err}")
+
+                # Guardamos la emoción para que coincida con tu front-end
+                emocion_formateada = nombre_emocion.strip().capitalize()
+
                 # Registro en el historial
                 nuevo_escaneo = models.HistorialEscaneo(
                     mascota_id=mascota_id,
-                    emocion=nombre_emocion,
+                    emocion=emocion_formateada,
                     confianza=round(confianza, 2),
                     embedding_sample=string_sample
                 )
                 db.add(nuevo_escaneo)
                 db.commit()
+                print(f"Escaneo guardado con éxito para mascota ID {mascota_id}: {emocion_formateada}")
 
         return {
             "status": "success",
@@ -173,7 +186,7 @@ def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_d
         # Obtener la última emoción registrada
         ultimo_escaneo = db.query(models.HistorialEscaneo).filter(
             models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.fecha.desc()).first()
+        ).order_by(models.HistorialEscaneo.id.desc()).first()
         
         ultima_emocion = ultimo_escaneo.emocion.capitalize() if ultimo_escaneo else "Indefinido"
 
@@ -202,7 +215,7 @@ def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_d
         
         ultimo_escaneo = db.query(models.HistorialEscaneo).filter(
             models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.fecha.desc()).first()
+        ).order_by(models.HistorialEscaneo.id.desc()).first()
         
         ultima_emocion = ultimo_escaneo.emocion.capitalize() if ultimo_escaneo else "Indefinido"
 
@@ -223,18 +236,21 @@ def obtener_historial_mascota(mascota_id: int, db: Session = Depends(database.ge
     try:
         registros = db.query(models.HistorialEscaneo).filter(
             models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.fecha.desc()).all()
+        ).order_by(models.HistorialEscaneo.fecha_hora.desc()).all() 
         
         resultado = []
         for r in registros:
+            fecha_formateada = r.fecha_hora.strftime("%Y-%m-%d %H:%M") if r.fecha_hora else "Sin fecha"
+
             resultado.append({
                 "id": r.id,
-                "emocion": r.emocion.capitalize(),
-                "confianza": r.confianza,
-                "fecha": r.fecha.strftime("%Y-%m-%d %H:%M") if r.fecha else "Fecha indefinida"
+                "emocion": r.emocion.capitalize() if r.emocion else "Indefinido",
+                "confianza": float(r.confianza) if r.confianza else 0.0, # Convertimos Numeric a float para evitar problemas en JSON
+                "fecha": fecha_formateada
             })
         return {"status": "success", "historial": resultado}
     except Exception as e:
+        print(f"Error en historial: {str(e)}")
         return {"status": "error", "message": str(e)}
     
 @app.get("/mascotas/{mascota_id}/analisis")
@@ -255,9 +271,10 @@ def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get
         
         for i in range(6, -1, -1):
             dia_evaluado = hoy - timedelta(days=i)
+            
             conteo_dia = db.query(models.HistorialEscaneo).filter(
                 models.HistorialEscaneo.mascota_id == mascota_id,
-                func.date(models.HistorialEscaneo.fecha) == dia_evaluado
+                func.date(models.HistorialEscaneo.fecha_hora) == dia_evaluado
             ).count()
             
             nombre_dia_eng = dia_evaluado.strftime("%A")
@@ -276,4 +293,5 @@ def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get
             "distribucion": {k.capitalize(): v for k, v in emociones_base.items()}
         }
     except Exception as e:
+        print(f"Error en análisis: {str(e)}")
         return {"status": "error", "message": str(e)}

@@ -15,8 +15,15 @@ export default function HistoryScreen() {
             const response = await fetch(`${API_BASE_URL}/mascotas/${MASCOTA_ID}/historial`);
             const data = await response.json();
 
-            if (data.status === 'success') {
+            // Esto te mostrará en la terminal de Expo qué está llegando exactamente
+            console.log("Datos recibidos del backend:", data);
+
+            // Validamos si llegó la lista del historial correctamente
+            if (data && Array.isArray(data.historial)) {
                 setHistorial(data.historial);
+                setError(false);
+            } else if (data.status === 'success') {
+                setHistorial(data.historial || []);
                 setError(false);
             } else {
                 setError(true);
