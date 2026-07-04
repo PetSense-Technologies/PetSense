@@ -66,23 +66,23 @@ export default function ProfileScreen() {
                 ))}
             </View>
 
-            {/* Botón: Agregar otra mascota (Borde Punteado/Dashed) */}
+            {/* Botón: Agregar otra mascota */}
             <TouchableOpacity style={styles.btnDashed}>
                 <Ionicons name="add" size={20} color="#244B5A" />
                 <Text style={styles.btnDashedText}>Agregar otra mascota</Text>
             </TouchableOpacity>
 
-            {/* Footer Informativo */}
+            {/* Footer Informativo Corregido */}
             <View style={styles.footer}>
                 <Text style={styles.footerText}>
                     <Ionicons name="heart-outline" size={12} color="#9FB3C8" /> PetSense v1.0 · Hecho para perritos
-                </</Text>
-        </View>
+                </Text>
+            </View>
 
-      {/* Margen de seguridad inferior */ }
-    <View style={{ height: 40 }} />
-    </ScrollView >
-  );
+            {/* Margen de seguridad inferior */}
+            <View style={{ height: 40 }} />
+        </ScrollView>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -135,3 +135,4 @@ const styles = StyleSheet.create({
     footer: { alignItems: 'center', marginBottom: 20, borderTopWidth: 1, borderTopColor: '#E4E9F0', paddingTop: 15 },
     footerText: { fontSize: 12, color: '#9FB3C8', fontWeight: '500' }
 });
+
