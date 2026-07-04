@@ -1,0 +1,8 @@
+# Ignorar entorno virtual del backend
+backend-ia-perros/venv/
+backend-ia-perros/__pycache__/
+backend-ia-perros/*.pt
+
+# Ignorar paquetes del frontend
+cliente-ia-perros/node_modules/
+cliente-ia-perros/.expo/
