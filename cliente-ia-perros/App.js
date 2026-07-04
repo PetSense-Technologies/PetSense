@@ -1,112 +1,41 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/Ionicons';
 
-// CONEXIÓN VIA DIRECCIÓN IPV4
-const API_URL = 'http://192.168.18.3:8000/predict';
+// Importación de las pantallas
+import ScannerScreen from './src/screens/ScannerScreen';
+import HistoryScreen from './src/screens/HistoryScreen';
+import AnalysisScreen from './src/screens/AnalysisScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 
-export default function CameraScreen() {
-  const [imageUri, setImageUri] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [resultado, setResultado] = useState(null);
+const Tab = createBottomTabNavigator();
 
-  // Seleccionar o tomar la foto
-  const seleccionarImagen = async () => {
-    // Permisos de la galería/cámara
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tus fotos para analizar al perrito.');
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true, // Habilita el recorte previo en el celular
-      aspect: [1, 1],      // Cuadrado perfecto para mejorar la eficiencia
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setImageUri(uri);
-      setResultado(null);
-      await enviarABackend(uri);
-    }
-  };
-
-  // Enviar el archivo mediante FormData al Backend
-  const enviarABackend = async (uri) => {
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append('file', {
-      uri: uri,
-      name: 'photo.jpg',
-      type: 'image/jpeg', // Formato estándar compatible con OpenCV
-    });
-
-    try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error en el servidor: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === 'success') {
-        setResultado(data);
-      } else {
-        Alert.alert('Error de IA', data.message || 'No se pudo procesar.');
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error de conexión', 'No se pudo conectar con el backend. Verifica la IP y la red Wi-Fi.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Analizador de Emociones Caninas</Text>
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: '#4F46E5',
+          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarStyle: { height: 65, paddingBottom: 10, paddingTop: 10 },
+          tabBarIcon: ({ color, size }) => {
+            let iconName;
+            if (route.name === 'Escáner') iconName = 'scan-circle';
+            else if (route.name === 'Historial') iconName = 'time';
+            else if (route.name === 'Análisis') iconName = 'bar-chart';
+            else if (route.name === 'Perfil') iconName = 'paw';
 
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-
-      <TouchableOpacity style={styles.button} onPress={seleccionarImagen} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Analizando con IA...' : 'Seleccionar Foto'}</Text>
-      </TouchableOpacity>
-
-      {loading && <ActivityIndicator size="large" color="#0000ff" style={{ marginTop: 20 }} />}
-
-      {resultado && (
-        <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>      Veredicto de la Red Neuronal      </Text>
-          <Text style={styles.resultText}>Estado: {resultado.emotion}</Text>
-          <Text style={styles.resultText}>Confianza: {resultado.confidence}%</Text>
-          {resultado.detection_fallback_applied && (
-            <Text style={styles.fallbackText}> Nota: Se aplicó encuadre de seguridad central.</Text>
-          )}
-        </View>
-      )}
-    </View>
+            return <Icon name={iconName} size={size + 2} color={color} />;
+          },
+        })}
+      >
+        <Tab.Screen name="Escáner" component={ScannerScreen} />
+        <Tab.Screen name="Historial" component={HistoryScreen} />
+        <Tab.Screen name="Análisis" component={AnalysisScreen} />
+        <Tab.Screen name="Perfil" component={ProfileScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', alignItems: 'center', justifyContent: 'center', padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 30, color: '#333', textAlign: 'center' },
-  image: { width: 250, height: 250, borderRadius: 15, marginBottom: 20 },
-  button: { backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 25 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  resultContainer: { marginTop: 30, padding: 20, backgroundColor: '#fff', borderRadius: 10, width: '100%', elevation: 3 },
-  resultTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#2c3e50' },
-  resultText: { fontSize: 16, color: '#34495e', marginVertical: 2 },
-  fallbackText: { fontSize: 12, color: '#e67e22', marginTop: 8, fontStyle: 'italic' }
-});
