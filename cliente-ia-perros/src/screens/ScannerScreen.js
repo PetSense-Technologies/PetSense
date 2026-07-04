@@ -1,81 +1,220 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ScannerScreen() {
-    const [permission, requestPermission] = useCameraPermissions();
     const [image, setImage] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [lastAnalysis, setLastAnalysis] = useState(null);
 
-    useEffect(() => {
-        (async () => {
-            if (!permission || !permission.granted) {
-                await requestPermission();
-            }
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-        })();
-    }, []);
+    // Conexión del celular con el backend
+    const BACKEND_URL = "http://192.168.18.3:8000/predict";
 
-    const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            quality: 1,
+    // Aquí se procesa y enviar la imagen al Backend FastAPI
+    const uploadImage = async (uri) => {
+        setLoading(true);
+
+        let formData = new FormData();
+        formData.append('file', {
+            uri: uri,
+            name: 'photo.jpg',
+            type: 'image/jpeg',
         });
-        if (!result.canceled) {
-            setImage(result.assets[0].uri);
+
+        // Pasamos de forma temporal el mascota_id = 1 para probar la inserción en Postgres
+        try {
+            const response = await fetch(`${BACKEND_URL}?mascota_id=1`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                const ahora = new Date();
+                const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                setLastAnalysis({
+                    hora: `Hoy ${horaFormateada}`,
+                    emocion: data.emotion,
+                    confianza: data.confidence
+                });
+            } else {
+                alert("Error de análisis: " + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("No se pudo conectar con el servidor IA");
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (!permission) {
-        return <View style={styles.center}><Text>Cargando configuración de permisos...</Text></View>;
-    }
+    // Opción 1: Abrir la Cámara Nativa
+    const takePhoto = async () => {
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+        if (permissionResult.granted === false) {
+            alert("¡Se requieren permisos para acceder a la cámara!");
+            return;
+        }
 
-    if (!permission.granted) {
-        return (
-            <View style={styles.center}>
-                <Text style={{ textAlign: 'center', marginBottom: 15 }}>Necesitamos tu permiso para usar la cámara</Text>
-                <TouchableOpacity style={styles.btnMain} onPress={requestPermission}>
-                    <Text style={styles.btnText}>Conceder Permiso</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
+        let result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+            await uploadImage(result.assets[0].uri);
+        }
+    };
+
+    // Opción 2: Abrir la Galería de Fotos
+    const pickImage = async () => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+            alert("¡Se requieren permisos para acceder a la galería!");
+            return;
+        }
+
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+            await uploadImage(result.assets[0].uri);
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Escáner Canino</Text>
-            <View style={styles.previewBox}>
+            {/* Encabezado */}
+            <View style={styles.header}>
+                <Text style={styles.brand}>🐾 PetSense</Text>
+                <Text style={styles.tagline}>Analizador de Emociones del Perro</Text>
+            </View>
+
+            {/* Contenedor de Previsualización Detección */}
+            <View style={styles.dashedContainer}>
                 {image ? (
-                    <Image source={{ uri: image }} style={styles.image} />
+                    <Image source={{ uri: image }} style={styles.fullImage} />
                 ) : (
-                    <Text style={styles.previewText}>No hay foto seleccionada</Text>
+                    <View style={styles.emptyState}>
+                        <Ionicons name="camera-outline" size={50} color="#7F8E9C" />
+                        <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu perro</Text>
+                    </View>
+                )}
+                {loading && (
+                    <View style={styles.loadingOverlay}>
+                        <ActivityIndicator size="large" color="#4F46E5" />
+                        <Text style={styles.loadingText}>Analizando con IA...</Text>
+                    </View>
                 )}
             </View>
-            <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.btn} onPress={pickImage}>
-                    <Icon name="images" size={24} color="#FFF" />
-                    <Text style={styles.btnText}>Galería</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, styles.btnMain]}>
-                    <Icon name="camera" size={24} color="#FFF" />
-                    <Text style={styles.btnText}>Cámara</Text>
-                </TouchableOpacity>
-            </View>
+
+            {/* Botón: Tomar Foto Nativa */}
+            <TouchableOpacity style={styles.btnPrimary} onPress={takePhoto} disabled={loading}>
+                <Ionicons name="camera" size={20} color="#FFF" />
+                <Text style={styles.btnPrimaryText}>Tomar foto</Text>
+            </TouchableOpacity>
+
+            {/* Botón: Subir Imagen de Galería */}
+            <TouchableOpacity style={styles.btnSecondary} onPress={pickImage} disabled={loading}>
+                <Ionicons name="arrow-up-tray" size={20} color="#3A536B" />
+                <Text style={styles.btnSecondaryText}>Subir imagen</Text>
+            </TouchableOpacity>
+
+            {/* Tarjeta de Resultados (Se dibuja si existe un análisis previo) */}
+            {lastAnalysis && (
+                <View style={styles.resultCard}>
+                    <View style={styles.iconBadge}>
+                        <Ionicons name="happy-outline" size={26} color="#22C55E" />
+                    </View>
+                    <View style={styles.resultTextContainer}>
+                        <Text style={styles.resultLabel}>Último análisis · {lastAnalysis.hora}</Text>
+                        <Text style={styles.resultData}>
+                            Max estaba <Text style={{ fontWeight: 'bold' }}>{lastAnalysis.emocion} · {lastAnalysis.confianza}%</Text>
+                        </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F5F7FA', padding: 20, alignItems: 'center' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-    title: { fontSize: 24, fontWeight: 'bold', color: '#1A1A1A', marginTop: 40, marginBottom: 20 },
-    previewBox: { width: '100%', height: 350, backgroundColor: '#E4E8EE', borderRadius: 16, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', marginBottom: 30 },
-    previewText: { color: '#666', fontSize: 16 },
-    image: { width: '100%', height: '100%' },
-    actionRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-around' },
-    btn: { flexDirection: 'row', backgroundColor: '#6C757D', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center', gap: 8 },
-    btnMain: { backgroundColor: '#4F46E5', flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center', gap: 8 },
-    btnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 }
+    container: { flex: 1, backgroundColor: '#F4F7F9', paddingHorizontal: 24, paddingTop: 50 },
+    header: { marginBottom: 20 },
+    brand: { fontSize: 26, fontWeight: 'bold', color: '#102A43' },
+    tagline: { fontSize: 15, color: '#486581', marginTop: 4 },
+    dashedContainer: {
+        width: '100%',
+        height: 280,
+        borderWidth: 2,
+        borderColor: '#BCCCDC',
+        borderStyle: 'dashed',
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F0F4F8',
+        overflow: 'hidden',
+        marginBottom: 20,
+        position: 'relative'
+    },
+    fullImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+    emptyState: { alignItems: 'center', paddingHorizontal: 40 },
+    emptyText: { textAlign: 'center', color: '#627D98', fontSize: 15, marginTop: 12, lineHeight: 22 },
+    loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(240,244,248,0.85)', justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 10, color: '#102A43', fontWeight: '600' },
+    btnPrimary: {
+        flexDirection: 'row',
+        backgroundColor: '#244B5A',
+        width: '100%',
+        paddingVertical: 16,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 12,
+        elevation: 2
+    },
+    btnPrimaryText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+    btnSecondary: {
+        flexDirection: 'row',
+        backgroundColor: '#E4ECF5',
+        borderWidth: 1,
+        borderColor: '#D0E1F3',
+        width: '100%',
+        paddingVertical: 16,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 20
+    },
+    btnSecondaryText: { color: '#244B5A', fontSize: 16, fontWeight: '600' },
+    resultCard: {
+        flexDirection: 'row',
+        backgroundColor: '#FFF',
+        borderRadius: 18,
+        padding: 16,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E4E9F0',
+        elevation: 1
+    },
+    iconBadge: { width: 44, height: 44, backgroundColor: '#DCFCE7', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    resultTextContainer: { flex: 1, marginLeft: 14 },
+    resultLabel: { fontSize: 12, color: '#627D98', marginBottom: 2 },
+    resultData: { fontSize: 15, color: '#102A43' }
 });
