@@ -1,14 +1,14 @@
-# main.py
+# librerias
 import os
 import cv2
 import numpy as np
-from fastapi import FastAPI, UploadFile, File, Request  # <── ¡Agregamos 'Request' aquí!
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 
 app = FastAPI(title="API de Emociones Caninas")
 
-# Habilitar CORS para que React Native pueda conectarse sin restricciones
+# CORS para React Native
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,15 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Rutas de los modelos (ambos deben estar en la misma carpeta raíz del proyecto)
+# Rutas de los modelos
 RUTA_DETECTOR = "yolov8n.pt"
 RUTA_CLASIFICADOR = "best.pt"
 
-print("📦 Cargando modelos de Inteligencia Artificial en memoria...")
+print("Cargando modelos de Inteligencia Artificial en memoria...")
 # Al instanciarlos aquí, se quedan precargados para responder de inmediato
 detector_perros = YOLO(RUTA_DETECTOR)
 clasificador_emociones = YOLO(RUTA_CLASIFICADOR)
-print("🚀 ¡Modelos listos para recibir peticiones!")
+print("¡Modelos listos para recibir peticiones!")
 
 @app.get("/")
 def inicio():
@@ -70,7 +70,7 @@ async def predict_emotion(file: UploadFile = File(...)):
         if recorte_efectivo.size == 0:
             recorte_efectivo = img
 
-        # 4. 🔥 EXTRACCIÓN DE EMBEDDINGS (El requisito del Ingeniero)
+        # 4. EMBEDDINGS
         # Pasamos el argumento embed=[...] para extraer el vector de la penúltima capa
         res_embed = clasificador_emociones(recorte_efectivo, embed=[10], verbose=False)
         
@@ -78,11 +78,10 @@ async def predict_emotion(file: UploadFile = File(...)):
         embedding_vector = res_embed[0].tolist() 
         dimension_vector = len(embedding_vector)
 
-        # Imprimimos en la consola los primeros 5 números para demostrar que existe
         print("\n" + "="*50)
-        print(f"🧬 EMBEDDING GENERADO CON ÉXITO")
-        print(f"📊 Dimensión del vector: {dimension_vector} características numéricas")
-        print(f"🔢 Primeros 5 valores del embedding: {embedding_vector[:5]}")
+        print(f"EMBEDDING GENERADO")
+        print(f"Dimensión del vector: {dimension_vector} características numéricas")
+        print(f"Primeros 5 valores del embedding: {embedding_vector[:5]}")
         print("="*50 + "\n")
 
         # 5. Inferencia normal para la interfaz móvil
@@ -109,7 +108,7 @@ async def predict_emotion(file: UploadFile = File(...)):
             "emotion": nombre_emocion.upper(),
             "confidence": round(confianza, 2),
             "embedding_dimension": dimension_vector,
-            "embedding_sample": embedding_vector[:5]  # Le mandamos una muestra ligera a la app
+            "embedding_sample": embedding_vector[:5]
         }
         
     except Exception as e:
