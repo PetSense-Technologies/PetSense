@@ -217,3 +217,22 @@ def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_d
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+    
+@app.get("/mascotas/{mascota_id}/historial")
+def obtener_historial_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
+    try:
+        registros = db.query(models.HistorialEscaneo).filter(
+            models.HistorialEscaneo.mascota_id == mascota_id
+        ).order_by(models.HistorialEscaneo.fecha.desc()).all()
+        
+        resultado = []
+        for r in registros:
+            resultado.append({
+                "id": r.id,
+                "emocion": r.emocion.capitalize(),
+                "confianza": r.confianza,
+                "fecha": r.fecha.strftime("%Y-%m-%d %H:%M") if r.fecha else "Fecha indefinida"
+            })
+        return {"status": "success", "historial": resultado}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
