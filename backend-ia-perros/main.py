@@ -5,6 +5,13 @@ import numpy as np
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
+from sqlalchemy.orm import Session
+from fastapi import Depends
+import database
+import models
+from datetime import date, timedelta
+
+models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="API de Emociones Caninas")
 
