@@ -110,7 +110,7 @@ async def predict_emotion(
                     
                     db_mascota.ultima_racha_update = hoy
                 except Exception as racha_err:
-                    print(f"⚠️ Advertencia en cálculo de racha (se ignora para guardar el escaneo): {racha_err}")
+                    print(f"Advertencia en cálculo de racha (se ignora para guardar el escaneo): {racha_err}")
 
                 # Guardamos la emoción para que coincida con tu front-end
                 emocion_formateada = nombre_emocion.strip().capitalize()
@@ -136,7 +136,7 @@ async def predict_emotion(
         
     except Exception as e:
         db.rollback()
-        print(f"❌ Error interno: {str(e)}")
+        print(f"Error interno: {str(e)}")
         return {"status": "error", "message": str(e)}
     
 @app.post("/mascotas/registro")
