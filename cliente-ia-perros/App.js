@@ -87,7 +87,7 @@ export default function CameraScreen() {
 
       {resultado && (
         <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>Veredicto de la Red Neuronal:</Text>
+          <Text style={styles.resultTitle}>      Veredicto de la Red Neuronal      </Text>
           <Text style={styles.resultText}>Estado: {resultado.emotion}</Text>
           <Text style={styles.resultText}>Confianza: {resultado.confidence}%</Text>
           {resultado.detection_fallback_applied && (
