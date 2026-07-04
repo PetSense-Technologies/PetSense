@@ -100,7 +100,7 @@ export default function ScannerScreen() {
             {/* Encabezado */}
             <View style={styles.header}>
                 <Text style={styles.brand}>🐾 PetSense</Text>
-                <Text style={styles.tagline}>Analizador de Emociones del Perro</Text>
+                <Text style={styles.tagline}>Analizador de Emociones de tu mascota</Text>
             </View>
 
             {/* Contenedor de Previsualización Detección */}
@@ -110,7 +110,7 @@ export default function ScannerScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <Ionicons name="camera-outline" size={50} color="#7F8E9C" />
-                        <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu perro</Text>
+                        <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu mascota</Text>
                     </View>
                 )}
                 {loading && (

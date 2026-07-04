@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 // Importación de las pantallas
 import ScannerScreen from './src/screens/ScannerScreen';
@@ -17,17 +17,18 @@ export default function App() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: '#4F46E5',
+          tabBarActiveTintColor: '#244B5A',
           tabBarInactiveTintColor: '#9CA3AF',
           tabBarStyle: { height: 65, paddingBottom: 10, paddingTop: 10 },
           tabBarIcon: ({ color, size }) => {
             let iconName;
-            if (route.name === 'Escáner') iconName = 'scan-circle';
-            else if (route.name === 'Historial') iconName = 'time';
-            else if (route.name === 'Análisis') iconName = 'bar-chart';
-            else if (route.name === 'Perfil') iconName = 'paw';
+            // Ionicons
+            if (route.name === 'Escáner') iconName = 'qr-code-outline';
+            else if (route.name === 'Historial') iconName = 'time-outline';
+            else if (route.name === 'Análisis') iconName = 'bar-chart-outline';
+            else if (route.name === 'Perfil') iconName = 'person-outline';
 
-            return <Icon name={iconName} size={size + 2} color={color} />;
+            return <Ionicons name={iconName} size={size} color={color} />;
           },
         })}
       >
@@ -38,5 +39,4 @@ export default function App() {
       </Tab.Navigator>
     </NavigationContainer>
   );
-
 }
