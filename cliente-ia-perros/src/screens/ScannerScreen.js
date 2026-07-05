@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ScannerScreen() {
     const [image, setImage] = useState(null);
@@ -11,7 +12,7 @@ export default function ScannerScreen() {
     // Conexión del celular con el backend
     const BACKEND_URL = "http://192.168.18.3:8000/predict";
 
-    // Aquí se procesa y enviar la imagen al Backend FastAPI
+    // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
         setLoading(true);
 
@@ -22,9 +23,15 @@ export default function ScannerScreen() {
             type: 'image/jpeg',
         });
 
-        // Pasamos de forma temporal el mascota_id = 1 para probar la inserción en Postgres
         try {
-            const response = await fetch(`${BACKEND_URL}?mascota_id=1`, {
+            // Se lee el ID guardado en el registro inicial
+            const idGuardado = await AsyncStorage.getItem('mascota_id_real');
+
+            // Si por alguna razón extraña no existe, usamos 1 como respaldo seguro
+            const idMascota = idGuardado ? idGuardado : '1';
+
+            // Se conecta el idMascota real en tu URL
+            const response = await fetch(`${BACKEND_URL}?mascota_id=${idMascota}`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -142,11 +149,11 @@ export default function ScannerScreen() {
                     <View style={styles.resultTextContainer}>
                         <Text style={styles.resultLabel}>Último análisis · {lastAnalysis.hora}</Text>
                         <Text style={styles.resultData}>
-                            Max estaba <Text style={{ fontWeight: 'bold' }}>{lastAnalysis.emocion} · {lastAnalysis.confianza}%</Text>
+                            Tu mascota estaba <Text style={{ fontWeight: 'bold' }}>{lastAnalysis.emocion} · {lastAnalysis.confianza}%</Text>
                         </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                </View>
+                </                View>
             )}
         </View>
     );

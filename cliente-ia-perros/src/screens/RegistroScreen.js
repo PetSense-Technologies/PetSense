@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://192.168.18.3:8000';
 
@@ -21,7 +22,7 @@ export default function RegistroScreen({ navigation }) {
         try {
             setLoading(true);
 
-            // 1. Enviar Dueño Real
+            // 1. Registrar Dueño en el Backend
             const resDueno = await fetch(`${API_BASE_URL}/duenos/registro`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -34,7 +35,7 @@ export default function RegistroScreen({ navigation }) {
             const dataDueno = await resDueno.json();
             if (dataDueno.status !== 'success') throw new Error(dataDueno.message);
 
-            // 2. Enviar Mascota Real vinculada al Dueño id
+            // 2. Registrar Mascota en el Backend vinculada a ese dueño
             const resMascota = await fetch(`${API_BASE_URL}/mascotas/registro`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -49,10 +50,14 @@ export default function RegistroScreen({ navigation }) {
             if (dataMascota.status !== 'success') throw new Error(dataMascota.message);
 
             const mascotaIdGenerado = dataMascota.mascota.id;
+
+            // 3. Guardamos el ID real en la memoria del teléfono
+            await AsyncStorage.setItem('mascota_id_real', mascotaIdGenerado.toString());
+
             Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente.`);
 
-            // 3. PASAR AL SIGUIENTE PASO DEL FLUJO ENVIANDO EL ID REAL
-            navigation.navigate('Escaner', { mascota_id: mascotaIdGenerado });
+            // Avanzamos al Escáner en tu flujo lineal sin pasar parámetros raros
+            navigation.navigate('Escaner');
 
         } catch (error) {
             Alert.alert('Error en registro', error.message || 'No se pudo conectar con el servidor.');
@@ -63,7 +68,7 @@ export default function RegistroScreen({ navigation }) {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.header}>Paso 2: Registro de Datos</Text>
+            <Text style={styles.header}>Paso 2: Registro Inicial</Text>
 
             <View style={styles.card}>
                 <Text style={styles.sectionTitle}>Información del Dueño</Text>
@@ -73,7 +78,7 @@ export default function RegistroScreen({ navigation }) {
             </View>
 
             <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Información del Canino</Text>
+                <Text style={styles.sectionTitle}>Información de tu Mascota</Text>
                 <TextInput style={styles.input} placeholder="Nombre del perrito *" value={nombreMascota} onChangeText={setNombreMascota} />
                 <TextInput style={styles.input} placeholder="Raza" value={raza} onChangeText={setRaza} />
                 <TextInput style={styles.input} placeholder="Edad en meses" keyboardType="numeric" value={edadMeses} onChangeText={setEdadMeses} />
