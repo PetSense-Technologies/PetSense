@@ -45,14 +45,16 @@ export default function RegistroScreen({ navigation }) {
 
             const data = await response.json();
 
-            // Dependiendo de cómo devuelva la respuesta tu función en Python, extraemos el ID.
-            // Si tu endpoint retorna directamente el objeto mascota creado, o un ID suelto, lo guardamos aquí:
-            const mascotaIdGenerado = data.id || (data.mascota && data.mascota.id) || '1';
+            const mascotaIdGenerado = data.mascota_id;
 
-            // Guardamos el ID real en la memoria del teléfono para el Escáner
-            await AsyncStorage.setItem('mascota_id_real', mascotaIdGenerado.toString());
+            if (!mascotaIdGenerado) {
+                throw new Error("El servidor no devolvió un ID de mascota válido.");
+            }
 
-            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente. `);
+            // Se guarda el ID en la memoria del teléfono para el Escáner e Historial
+            await AsyncStorage.setItem('mascota_id_real', String(mascotaIdGenerado));
+
+            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente `);
 
             // Rompemos el estancamiento y avanzamos fluidamente a la pantalla del Escáner
             navigation.navigate('MenuPrincipal');
@@ -63,6 +65,7 @@ export default function RegistroScreen({ navigation }) {
             setLoading(false);
         }
     };
+
 
     return (
         <ScrollView contentContainerStyle={styles.container}>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL } from '../config'; // 
+import { useFocusEffect } from '@react-navigation/native';
+import { API_BASE_URL } from '../config';
 
 export default function HistoryScreen() {
     const [historial, setHistorial] = useState([]);
@@ -10,34 +11,24 @@ export default function HistoryScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(false);
 
-    // Obtención de datos dinámicos desde FastAPI
     const fetchHistorial = async () => {
         try {
-            // 1. Se lee el ID real guardado en este dispositivo específico durante su registro
             const mascotaIdReal = await AsyncStorage.getItem('mascota_id_real');
 
             if (!mascotaIdReal) {
-                console.log("No se encontró un ID de mascota registrado en este dispositivo.");
                 setHistorial([]);
                 setLoading(false);
                 setRefreshing(false);
                 return;
             }
 
-            console.log(`Solicitando historial aislado para la mascota ID: ${mascotaIdReal}`);
+            console.log(`[FRONTEND] Pidiendo historial en tiempo real para mascota ID: ${mascotaIdReal}`);
 
-            // 2. Se inyecta dinámicamente el ID real en la petición a la API
-            const response = await fetch(`${API_BASE_URL}/mascotas/${mascotaIdReal}/historial`);
-            const data = await response.json();
+            const res = await fetch(`${API_BASE_URL}/mascotas/${mascotaIdReal}/historial`);
+            const data = await res.json();
 
-            console.log("Datos recibidos del backend:", data);
-
-            // Se verifica si llegó la lista del historial correctamente
             if (data && Array.isArray(data.historial)) {
                 setHistorial(data.historial);
-                setError(false);
-            } else if (data.status === 'success') {
-                setHistorial(data.historial || []);
                 setError(false);
             } else {
                 setError(true);
@@ -51,137 +42,104 @@ export default function HistoryScreen() {
         }
     };
 
-    // Cargar datos la primera vez que se monta la pantalla
-    useEffect(() => {
-        fetchHistorial();
-    }, []);
+    // Esto asegura que la pantalla limpie el caché visual en cada cambio de pestaña
+    useFocusEffect(
+        useCallback(() => {
+            fetchHistorial();
+        }, [])
+    );
 
-    // Función para el Pull to Refresh
     const onRefresh = () => {
         setRefreshing(true);
         fetchHistorial();
     };
 
-    // Se cargan estilos visuales según la emoción real (Corregidos nombres del log del backend)
-    const getEmotionDetails = (emotion) => {
-        if (!emotion) return { icon: 'paw-outline', color: '#627D98', bgColor: '#F0F4F8' };
-
-        const emotionLower = emotion.toLowerCase();
-        switch (emotionLower) {
-            case 'happy':
-            case 'feliz':
-                return { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' };
-            case 'emocionado':
-                return { icon: 'flash-outline', color: '#F97316', bgColor: '#FFEDD5' };
-            case 'relax':
-            case 'tranquilo':
-                return { icon: 'contrast-outline', color: '#244B5A', bgColor: '#E4ECF5' };
-            case 'sad':
-            case 'triste':
-                return { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' };
-            case 'angry':
-            case 'ansioso':
-                return { icon: 'alert-circle-outline', color: '#D97706', bgColor: '#FEF3C7' };
+    // Función auxiliar para los colores de las emociones
+    const getEmotionDetails = (emocion) => {
+        const emo = emocion ? emocion.toUpperCase() : "INDEFINIDO";
+        switch (emo) {
+            case 'FELIZ': case 'HAPPY':
+                return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
+            case 'EMOCIONADO':
+                return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
+            case 'TRANQUILO': case 'RELAX':
+                return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
+            case 'TRISTE':
+                return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
+            case 'ANSIOSO': case 'ANGRY':
+                return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Inquieto/Enojado' };
             default:
-                return { icon: 'paw-outline', color: '#627D98', bgColor: '#F0F4F8' };
+                return { color: '#94A3B8', icon: 'help-circle-outline', label: 'Indefinido' };
         }
     };
 
     if (loading) {
         return (
-            <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#244B5A" />
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color="#2563EB" />
                 <Text style={styles.loadingText}>Cargando historial...</Text>
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.centerContainer}>
-                <Ionicons name="cloud-offline-outline" size={48} color="#D97706" />
-                <Text style={styles.errorText}>No se pudo conectar con el servidor</Text>
-                <Text style={styles.errorSubtext}>Verifica que la API esté corriendo y la IP en config.js sea correcta.</Text>
             </View>
         );
     }
 
     return (
         <ScrollView
-            style={styles.container}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#244B5A']} />
-            }
+            contentContainerStyle={styles.container}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563EB']} />}
         >
-            {/* Encabezado */}
-            <View style={styles.header}>
-                <Text style={styles.title}>Historial</Text>
-                <Text style={styles.subtitle}>Registros de emociones detectadas</Text>
-            </View>
+            <Text style={styles.title}>Historial de Análisis</Text>
 
-            {/* Lista de Tarjetas Reales u opción vacía */}
+            {error && (
+                <View style={styles.errorCard}>
+                    <Ionicons name="cloud-offline-outline" size={24} color="#EF4444" />
+                    <Text style={styles.errorText}>No se pudo sincronizar el historial.</Text>
+                </View>
+            )}
+
             {historial.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                    <Ionicons name="images-outline" size={48} color="#BACCD6" />
-                    <Text style={styles.emptyText}>No hay escaneos registrados aún</Text>
-                    <Text style={styles.emptySubtext}>¡Ve a la pestaña Escanear para realizar el primer análisis!</Text>
+                <View style={styles.emptyCard}>
+                    <Ionicons name="images-outline" size={48} color="#94A3B8" />
+                    <Text style={styles.emptyText}>Aún no has realizado escaneos con esta mascota.</Text>
                 </View>
             ) : (
-                historial.map((registro) => {
-                    const details = getEmotionDetails(registro.emocion);
+                historial.map((item) => {
+                    const emoDetails = getEmotionDetails(item.emocion);
                     return (
-                        <View key={registro.id} style={styles.historyCard}>
-                            <View style={[styles.iconContainer, { backgroundColor: details.bgColor }]}>
-                                <Ionicons name={details.icon} size={24} color={details.color} />
-                            </View>
-                            <View style={styles.cardContent}>
-                                <View style={styles.cardHeaderRow}>
-                                    <Text style={styles.emotionTitle}>{registro.emocion}</Text>
-                                    <Text style={styles.confidenceText}>{registro.confianza}% conf.</Text>
+                        <View key={item.id} style={[styles.historyCard, { borderLeftColor: emoDetails.color }]}>
+                            <View style={styles.cardRow}>
+                                <View style={styles.emotionInfo}>
+                                    <Ionicons name={emoDetails.icon} size={24} color={emoDetails.color} style={{ marginRight: 8 }} />
+                                    <View>
+                                        <Text style={styles.emotionName}>{emoDetails.label}</Text>
+                                        <Text style={styles.dateText}>{item.fecha}</Text>
+                                    </View>
                                 </View>
-                                <Text style={styles.dateText}>{registro.fecha}</Text>
+                                <View style={[styles.confidenceBadge, { backgroundColor: emoDetails.color + '15' }]}>
+                                    <Text style={[styles.confidenceText, { color: emoDetails.color }]}>{item.confianza}%</Text>
+                                </View>
                             </View>
                         </View>
                     );
                 })
             )}
-
-            {/* Margen de seguridad inferior */}
-            <View style={{ height: 40 }} />
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F4F7F9', paddingHorizontal: 24, paddingTop: 50 },
-    header: { marginBottom: 24 },
-    title: { fontSize: 28, fontWeight: 'bold', color: '#102A43' },
-    subtitle: { fontSize: 15, color: '#486581', marginTop: 4 },
-
-    centerContainer: { flex: 1, backgroundColor: '#F4F7F9', justifyContent: 'center', alignItems: 'center', padding: 24 },
-    loadingText: { marginTop: 12, fontSize: 16, color: '#486581', fontWeight: '500' },
-    errorText: { marginTop: 16, fontSize: 18, fontWeight: 'bold', color: '#102A43', textAlign: 'center' },
-    errorSubtext: { marginTop: 8, fontSize: 14, color: '#627D98', textAlign: 'center', lineHeight: 20 },
-    emptyContainer: { alignItems: 'center', marginTop: 60, paddingHorizontal: 20 },
-    emptyText: { marginTop: 16, fontSize: 16, fontWeight: '700', color: '#486581' },
-    emptySubtext: { marginTop: 6, fontSize: 14, color: '#9FB3C8', textAlign: 'center' },
-
-    historyCard: {
-        flexDirection: 'row',
-        backgroundColor: '#FFF',
-        borderRadius: 20,
-        padding: 16,
-        alignItems: 'center',
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E4E9F0',
-        elevation: 1,
-    },
-    iconContainer: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-    cardContent: { flex: 1, marginLeft: 16 },
-    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    emotionTitle: { fontSize: 16, fontWeight: '700', color: '#102A43' },
-    confidenceText: { fontSize: 13, fontWeight: '600', color: '#627D98' },
-    dateText: { fontSize: 13, color: '#9FB3C8', marginTop: 4, fontWeight: '500' }
+    container: { padding: 20, backgroundColor: '#F1F5F9', flexGrow: 1 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9' },
+    title: { fontSize: 22, fontWeight: 'bold', color: '#1E293B', marginBottom: 20 },
+    loadingText: { marginTop: 10, color: '#64748B', fontSize: 14 },
+    historyCard: { backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginBottom: 12, borderLeftWidth: 5, elevation: 2 },
+    cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    emotionInfo: { flexDirection: 'row', alignItems: 'center' },
+    emotionName: { fontSize: 16, fontWeight: 'bold', color: '#334155' },
+    dateText: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
+    confidenceBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+    confidenceText: { fontSize: 14, fontWeight: 'bold' },
+    emptyCard: { backgroundColor: '#FFF', padding: 30, borderRadius: 12, alignItems: 'center', marginTop: 20 },
+    emptyText: { color: '#64748B', marginTop: 10, textAlign: 'center', fontSize: 14 },
+    errorCard: { flexDirection: 'row', backgroundColor: '#FEE2E2', padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 15 },
+    errorText: { color: '#991B1B', marginLeft: 10, fontSize: 14, fontWeight: '500' }
 });
