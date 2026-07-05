@@ -233,6 +233,6 @@ npx expo start
 4. Vinculación del Dispositivo Móvil
 Conecta tu computadora y tu celular a la misma red Wi-Fi.
 
-Abre el archivo de configuración de red en tu frontend (ej. src/config.js) y verifica que API_BASE_URL apunte a la IP local exacta de tu máquina (ej. http://192.168.18.3:8000).
+Abre el archivo de configuración de red en tu frontend (ej. src/config.js) y verifica que API_BASE_URL apunte a la IP local exacta de tu máquina (ej. http://aqui_va_tu_url:8000).
 
 Escanea el código QR que se muestra en la terminal de Expo usando la cámara de tu celular (iOS) o la aplicación Expo Go (Android).
