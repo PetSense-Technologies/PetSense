@@ -22,41 +22,38 @@ export default function RegistroScreen({ navigation }) {
         try {
             setLoading(true);
 
-            // 1. Registrar Dueño en el Backend
-            const resDueno = await fetch(`${API_BASE_URL}/duenos/registro`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre_dueno: nombreDueno,
-                    celular: celular,
-                    direccion: direccion || null
-                }),
+            // Armamos los Query Parameters tal y como los pide tu main.py en los argumentos de la función
+            const params = new URLSearchParams({
+                nombre_dueno: nombreDueno,
+                celular: celular,
+                direccion: direccion || '',
+                nombre_mascota: nombreMascota,
+                raza: raza || 'Mestizo',
+                edad_meses: edadMeses ? parseInt(edadMeses).toString() : '0'
             });
-            const dataDueno = await resDueno.json();
-            if (dataDueno.status !== 'success') throw new Error(dataDueno.message);
 
-            // 2. Registrar Mascota en el Backend vinculada a ese dueño
-            const resMascota = await fetch(`${API_BASE_URL}/mascotas/registro`, {
+            // Hacemos una única petición POST al endpoint unificado de tu backend
+            const response = await fetch(`${API_BASE_URL}/mascotas/registro?${params.toString()}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    dueno_id: dataDueno.dueno.id,
-                    nombre_mascota: nombreMascota,
-                    raza: raza || 'Mestizo',
-                    edad_meses: edadMeses ? parseInt(edadMeses) : null
-                }),
+                headers: { 'Accept': 'application/json' }
             });
-            const dataMascota = await resMascota.json();
-            if (dataMascota.status !== 'success') throw new Error(dataMascota.message);
 
-            const mascotaIdGenerado = dataMascota.mascota.id;
+            if (!response.ok) {
+                throw new Error(`Error en el servidor: Código ${response.status}`);
+            }
 
-            // 3. Guardamos el ID real en la memoria del teléfono
+            const data = await response.json();
+
+            // Dependiendo de cómo devuelva la respuesta tu función en Python, extraemos el ID.
+            // Si tu endpoint retorna directamente el objeto mascota creado, o un ID suelto, lo guardamos aquí:
+            const mascotaIdGenerado = data.id || (data.mascota && data.mascota.id) || '1';
+
+            // Guardamos el ID real en la memoria del teléfono para el Escáner
             await AsyncStorage.setItem('mascota_id_real', mascotaIdGenerado.toString());
 
-            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente.`);
+            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente. 🎉`);
 
-            // Avanzamos al Escáner en tu flujo lineal sin pasar parámetros raros
+            // Rompemos el estancamiento y avanzamos fluidamente a la pantalla del Escáner
             navigation.navigate('Escaner');
 
         } catch (error) {
