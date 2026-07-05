@@ -113,7 +113,7 @@ Persistencia y Sincronización: SQLAlchemy recibe el ID real de la mascota, asoc
 
 
 
-## 🎨 Identidad Visual y Psicología del Color
+##  Identidad Visual y Psicología del Color
 
 El diseño de la interfaz se basa en una paleta limpia, moderna y funcional, orientada a transmitir confianza, estabilidad y una lectura inmediata del estado emocional de la mascota. El sistema normaliza las respuestas técnicas de la IA a etiquetas legibles por el usuario.
 
