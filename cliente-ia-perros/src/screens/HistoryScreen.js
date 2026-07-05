@@ -30,6 +30,9 @@ export default function HistoryScreen() {
             if (data && Array.isArray(data.historial)) {
                 setHistorial(data.historial);
                 setError(false);
+            } else if (data && Array.isArray(data)) {
+                setHistorial(data);
+                setError(false);
             } else {
                 setError(true);
             }
@@ -42,7 +45,6 @@ export default function HistoryScreen() {
         }
     };
 
-    // Esto asegura que la pantalla limpie el caché visual en cada cambio de pestaña
     useFocusEffect(
         useCallback(() => {
             fetchHistorial();
@@ -54,22 +56,42 @@ export default function HistoryScreen() {
         fetchHistorial();
     };
 
-    // Función auxiliar para los colores de las emociones
     const getEmotionDetails = (emocion) => {
-        const emo = emocion ? emocion.toUpperCase() : "INDEFINIDO";
+        if (!emocion) {
+            return { color: '#94A3B8', icon: 'help-circle-outline', label: 'Sin Datos' };
+        }
+
+        const emo = emocion.toString().replace(/['"]+/g, '').toUpperCase().trim();
+
         switch (emo) {
-            case 'FELIZ': case 'HAPPY':
+            case 'FELIZ':
+            case 'HAPPY':
+            case 'SMILE':
                 return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
+
             case 'EMOCIONADO':
+            case 'EXITED':
+            case 'EXCITED':
                 return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
-            case 'TRANQUILO': case 'RELAX':
+
+            case 'TRANQUILO':
+            case 'RELAXED':
+            case 'RELAX':
                 return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
+
             case 'TRISTE':
+            case 'SAD':
+            case 'FROWN': // 
                 return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
-            case 'ANSIOSO': case 'ANGRY':
+
+            case 'ANSIOSO':
+            case 'ANGRY':
+            case 'ENOJADO':
                 return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Inquieto/Enojado' };
+
             default:
-                return { color: '#94A3B8', icon: 'help-circle-outline', label: 'Indefinido' };
+                // Fallback por si la red reporta un campo desconocido
+                return { color: '#94A3B8', icon: 'help-circle-outline', label: emocion };
         }
     };
 
@@ -102,20 +124,21 @@ export default function HistoryScreen() {
                     <Text style={styles.emptyText}>Aún no has realizado escaneos con esta mascota.</Text>
                 </View>
             ) : (
-                historial.map((item) => {
+                historial.map((item, index) => {
+                    // Evaluamos la clave del JSON mapeado
                     const emoDetails = getEmotionDetails(item.emocion);
                     return (
-                        <View key={item.id} style={[styles.historyCard, { borderLeftColor: emoDetails.color }]}>
+                        <View key={item.id || index} style={[styles.historyCard, { borderLeftColor: emoDetails.color }]}>
                             <View style={styles.cardRow}>
                                 <View style={styles.emotionInfo}>
                                     <Ionicons name={emoDetails.icon} size={24} color={emoDetails.color} style={{ marginRight: 8 }} />
                                     <View>
                                         <Text style={styles.emotionName}>{emoDetails.label}</Text>
-                                        <Text style={styles.dateText}>{item.fecha}</Text>
+                                        <Text style={styles.dateText}>{item.fecha || 'Sin fecha'}</Text>
                                     </View>
                                 </View>
                                 <View style={[styles.confidenceBadge, { backgroundColor: emoDetails.color + '15' }]}>
-                                    <Text style={[styles.confidenceText, { color: emoDetails.color }]}>{item.confianza}%</Text>
+                                    <Text style={[styles.confidenceText, { color: emoDetails.color }]}>{parseFloat(item.confianza || 0).toFixed(2)}%</Text>
                                 </View>
                             </View>
                         </View>
