@@ -1,4 +1,18 @@
 Markdown
+# PetSense 🐾 — Aplicación Mobil para detectar las emociones de tu mascota.
+
+PetSense es una aplicación móvil diseñada para el análisis del comportamiento y emociones animales mediante reconocimiento facial. El ecosistema conecta un frontend desarrollado en React Native con un backend de alto rendimiento en Python (FastAPI) y almacenamiento relacional gestionado en PostgreSQL.
+
+
+
+## Identidad Visual y Psicología del Color
+
+El diseño de la interfaz se basa en una paleta limpia, moderna y funcional (antropocentrismo visual), orientada a transmitir confianza, estabilidad y una lectura inmediata del estado emocional de la mascota.
+
+Aquí tienes el README.md final y definitivo totalmente actualizado. Se agregaron las etiquetas de la IA analizadas (Frown, Relax, etc.), la justificación de colores basada en el comportamiento real del backend, la arquitectura, el flujo de procesamiento y los requisitos desde cero.
+
+README.md
+Markdown
 # PetSense 🐾 — Mobile Emotion Analysis App
 
 PetSense es una aplicación móvil diseñada para el análisis del comportamiento y emociones animales mediante reconocimiento facial. El ecosistema conecta un frontend desarrollado en React Native con un backend de alto rendimiento en Python (FastAPI) y almacenamiento relacional gestionado en PostgreSQL.
@@ -7,19 +21,20 @@ PetSense es una aplicación móvil diseñada para el análisis del comportamient
 
 ## 🎨 Identidad Visual y Psicología del Color
 
-El diseño de la interfaz se basa en una paleta limpia, moderna y funcional (antropocentrismo visual), orientada a transmitir confianza, estabilidad y una lectura inmediata del estado emocional de la mascota.
+El diseño de la interfaz se basa en una paleta limpia, moderna y funcional, orientada a transmitir confianza, estabilidad y una lectura inmediata del estado emocional de la mascota. El sistema normaliza las respuestas técnicas de la IA a etiquetas legibles por el usuario.
 
-| Color | Código Hex | Uso en la Aplicación | Justificación Psicológica |
-| :--- | :--- | :--- | :--- |
-| **Azul Principal** | `#2563EB` | Headers, tarjetas informativas, botones de acción. | Transmite confianza, seguridad tecnológica y profesionalismo médico/veterinario. |
-| **Verde Éxito** | `#10B981` | Botones de confirmación, emoción: **FELIZ**. | Asociado a la salud, vitalidad, tranquilidad y estados de ánimo óptimos en la mascota. |
-| **Ámbar Alerta** | `#F59E0B` | Badges de atención, emoción: **EMOCIONADO**. | Captura la atención sin generar pánico; representa alta energía y dinamismo. |
-| **Rojo Crítico** | `#EF4444` | Alertas de error, emoción: **ANSIOSO / ENOJADO**. | Código universal de advertencia. Indica estados de estrés, peligro o irritabilidad que requieren atención inmediata. |
-| **Gris Fondo** | `#F1F5F9` | Fondo general de las pantallas (`Slate-100`). | Reduce la fatiga visual, aporta limpieza y permite que las tarjetas de datos contrasten de forma limpia. |
+| Color | Código Hex | Etiqueta del Modelo (IA) | Texto en Interfaz | Justificación Psicológica |
+| :--- | :--- | :--- | :--- | :--- |
+| **Azul Institucional** | `#2563EB` | N/A | Global (Botones/Headers) | Transmite confianza, seguridad tecnológica y profesionalismo veterinario. |
+| **Verde Éxito** | `#10B981` | `HAPPY`, `FELIZ`, `SMILE` | **Feliz** | Asociado a la salud, vitalidad y estados de ánimo óptimos en la mascota. |
+| **Ámbar Alerta** | `#F59E0B` | `EXCITED`, `EMOCIONADO`, `EXITED` | **Emocionado** | Captura la atención sin generar pánico; representa alta energía y dinamismo positivo. |
+| **Azul Claro** | `#3B82F6` | `RELAXED`, `TRANQUILO`, `RELAX` | **Tranquilo** | Representa paz, serenidad, balance y un estado de reposo libre de estrés. |
+| **Gris Pizarra** | `#64748B` | `SAD`, `TRISTE`, `FROWN` | **Triste** | Denota neutralidad pasiva, decaimiento físico o emocional, y baja energía. |
+| **Rojo Crítico** | `#EF4444` | `ANGRY`, `ANSIOSO`, `ENOJADO` | **Inquieto / Enojado** | Código universal de advertencia. Indica estrés agudo, miedo o reactividad. |
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 El sistema implementa una arquitectura desacoplada de tipo **Cliente-Servidor (REST API)** distribuida en tres capas principales:
 
@@ -27,9 +42,9 @@ El sistema implementa una arquitectura desacoplada de tipo **Cliente-Servidor (R
 2. **Capa de Lógica de Negocio (Backend):** Construida sobre FastAPI (Python). Expone endpoints optimizados, procesa las peticiones de registro unificado mediante query parameters y gestiona el flujo de análisis mediante modelos de IA.
 3. **Capa de Datos (Persistencia):** Base de datos relacional PostgreSQL encargada de mantener la integridad referencial entre los dueños, las mascotas y los registros históricos de análisis emocional.
 
----
 
-## 🔄 Flujo de Procesamiento y Conectividad
+
+## Flujo de Procesamiento y Conectividad
 
 El siguiente flujo describe cómo interactúan los componentes desde que se registra una mascota hasta que se consulta su historial en tiempo real:
 
@@ -51,7 +66,7 @@ v                                               v
 
 ---
 
-## 🛠️ Herramientas y Stack Tecnológico
+## Herramientas y Stack Tecnológico
 
 ### Frontend (Cliente Móvil)
 * **React Native (Expo Framework):** Desarrollo ágil de la interfaz nativa multiplataforma.
@@ -68,9 +83,9 @@ v                                               v
 * **PostgreSQL:** Motor de base de datos relacional para la persistencia del negocio.
 * **pgAdmin 4:** Herramienta web de administración gráfica para el monitoreo de tablas, índices y queries en la base de datos.
 
----
 
-## 📋 Requisitos del Sistema
+
+##  Requisitos del Sistema
 
 Antes de iniciar la instalación, asegúrate de tener instalado en tu máquina:
 * **Node.js** (Versión LTS recomendada, 18.x o superior)
@@ -80,7 +95,7 @@ Antes de iniciar la instalación, asegúrate de tener instalado en tu máquina:
 
 ---
 
-## 🚀 Guía de Instalación desde Cero
+##  Guía de Instalación desde Cero
 
 ### 1. Configuración de la Base de Datos
 1. Abre **pgAdmin 4** y conéctate a tu servidor local de PostgreSQL.
