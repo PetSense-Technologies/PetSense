@@ -32,6 +32,7 @@ export default function RegistroScreen({ navigation }) {
                 edad_meses: edadMeses ? parseInt(edadMeses).toString() : '0'
             });
 
+
             // Hacemos una única petición POST al endpoint unificado de tu backend
             const response = await fetch(`${API_BASE_URL}/mascotas/registro?${params.toString()}`, {
                 method: 'POST',
