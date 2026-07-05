@@ -52,10 +52,10 @@ export default function RegistroScreen({ navigation }) {
             // Guardamos el ID real en la memoria del teléfono para el Escáner
             await AsyncStorage.setItem('mascota_id_real', mascotaIdGenerado.toString());
 
-            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente. 🎉`);
+            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente. `);
 
             // Rompemos el estancamiento y avanzamos fluidamente a la pantalla del Escáner
-            navigation.navigate('Escaner');
+            navigation.navigate('MenuPrincipal');
 
         } catch (error) {
             Alert.alert('Error en registro', error.message || 'No se pudo conectar con el servidor.');
