@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { API_BASE_URL, MASCOTA_ID } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../config'; // 
 
 export default function HistoryScreen() {
     const [historial, setHistorial] = useState([]);
@@ -9,16 +10,29 @@ export default function HistoryScreen() {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(false);
 
-    // Obteneción datos desde FastAPI
+    // Obtención de datos dinámicos desde FastAPI
     const fetchHistorial = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/mascotas/${MASCOTA_ID}/historial`);
+            // 1. Se lee el ID real guardado en este dispositivo específico durante su registro
+            const mascotaIdReal = await AsyncStorage.getItem('mascota_id_real');
+
+            if (!mascotaIdReal) {
+                console.log("No se encontró un ID de mascota registrado en este dispositivo.");
+                setHistorial([]);
+                setLoading(false);
+                setRefreshing(false);
+                return;
+            }
+
+            console.log(`Solicitando historial aislado para la mascota ID: ${mascotaIdReal}`);
+
+            // 2. Se inyecta dinámicamente el ID real en la petición a la API
+            const response = await fetch(`${API_BASE_URL}/mascotas/${mascotaIdReal}/historial`);
             const data = await response.json();
 
-            // Esto te mostrará en la terminal de Expo qué está llegando exactamente
             console.log("Datos recibidos del backend:", data);
 
-            // Validamos si llegó la lista del historial correctamente
+            // Se verifica si llegó la lista del historial correctamente
             if (data && Array.isArray(data.historial)) {
                 setHistorial(data.historial);
                 setError(false);
@@ -48,18 +62,24 @@ export default function HistoryScreen() {
         fetchHistorial();
     };
 
-    // Se cargan estilos visuales según la emoción real
+    // Se cargan estilos visuales según la emoción real (Corregidos nombres del log del backend)
     const getEmotionDetails = (emotion) => {
+        if (!emotion) return { icon: 'paw-outline', color: '#627D98', bgColor: '#F0F4F8' };
+
         const emotionLower = emotion.toLowerCase();
         switch (emotionLower) {
+            case 'happy':
             case 'feliz':
                 return { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' };
             case 'emocionado':
                 return { icon: 'flash-outline', color: '#F97316', bgColor: '#FFEDD5' };
+            case 'relax':
             case 'tranquilo':
                 return { icon: 'contrast-outline', color: '#244B5A', bgColor: '#E4ECF5' };
+            case 'sad':
             case 'triste':
                 return { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' };
+            case 'angry':
             case 'ansioso':
                 return { icon: 'alert-circle-outline', color: '#D97706', bgColor: '#FEF3C7' };
             default:
@@ -139,7 +159,6 @@ const styles = StyleSheet.create({
     title: { fontSize: 28, fontWeight: 'bold', color: '#102A43' },
     subtitle: { fontSize: 15, color: '#486581', marginTop: 4 },
 
-    // Contenedores de estado (Carga / Error / Vacío)
     centerContainer: { flex: 1, backgroundColor: '#F4F7F9', justifyContent: 'center', alignItems: 'center', padding: 24 },
     loadingText: { marginTop: 12, fontSize: 16, color: '#486581', fontWeight: '500' },
     errorText: { marginTop: 16, fontSize: 18, fontWeight: 'bold', color: '#102A43', textAlign: 'center' },
@@ -148,7 +167,6 @@ const styles = StyleSheet.create({
     emptyText: { marginTop: 16, fontSize: 16, fontWeight: '700', color: '#486581' },
     emptySubtext: { marginTop: 6, fontSize: 14, color: '#9FB3C8', textAlign: 'center' },
 
-    // Tarjetas del Historial
     historyCard: {
         flexDirection: 'row',
         backgroundColor: '#FFF',
