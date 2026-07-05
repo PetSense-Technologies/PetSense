@@ -16,22 +16,24 @@ export default function ScannerScreen() {
     const uploadImage = async (uri) => {
         setLoading(true);
 
-        let formData = new FormData();
-        formData.append('file', {
-            uri: uri,
-            name: 'photo.jpg',
-            type: 'image/jpeg',
-        });
-
         try {
-            // Se lee el ID guardado en el registro inicial
+            // 1. Se lee el ID guardado en el registro inicial
             const idGuardado = await AsyncStorage.getItem('mascota_id_real');
-
-            // Si por alguna razón extraña no existe, usamos 1 como respaldo seguro
             const idMascota = idGuardado ? idGuardado : '1';
 
-            // Se conecta el idMascota real en tu URL
-            const response = await fetch(`${BACKEND_URL}?mascota_id=${idMascota}`, {
+            console.log(`Enviando imagen para la mascota ID aislada: ${idMascota}`);
+
+            // 2. Metemos tanto el archivo como el ID dentro de FormData
+            let formData = new FormData();
+            formData.append('file', {
+                uri: uri,
+                name: 'photo.jpg',
+                type: 'image/jpeg',
+            });
+            formData.append('mascota_id', idMascota);
+
+            // 3. Hacemos la petición limpia a /predict sin parámetros quemados en la URL
+            const response = await fetch(BACKEND_URL, {
                 method: 'POST',
                 body: formData,
                 headers: {

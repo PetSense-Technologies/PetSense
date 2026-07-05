@@ -2,23 +2,20 @@
 import os
 import cv2
 import numpy as np
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Depends, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 from sqlalchemy.orm import Session
-from fastapi import Depends
 import database
 import models
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from sqlalchemy import func
-from fastapi import Form
-from fastapi import Query
+import pytz
 
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="API de Emociones Caninas")
 
-# CORS para React Native
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,12 +24,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+ZONA_ECUADOR = pytz.timezone('America/Guayaquil')
+
 # Rutas de los modelos
 RUTA_DETECTOR = "yolov8n.pt"
 RUTA_CLASIFICADOR = "best.pt"
 
 print("Cargando modelos de Inteligencia Artificial en memoria...")
-# Al instanciarlos aquí, se quedan precargados para responder de inmediato
 detector_perros = YOLO(RUTA_DETECTOR)
 clasificador_emociones = YOLO(RUTA_CLASIFICADOR)
 print("¡Modelos listos para recibir peticiones!")
@@ -44,13 +42,11 @@ def inicio():
 @app.post("/predict")
 async def predict_emotion(
     file: UploadFile = File(...), 
-    mascota_id: int = Form(None),  # Lo busca en el Form Body si viene ahí
-    mascota_id_query: int = Query(None, alias="mascota_id"), # ¡NUEVO! Lo busca en la URL (?mascota_id=1)
+    mascota_id: int = Form(None),  
+    mascota_id_query: int = Query(None, alias="mascota_id"), 
     db: Session = Depends(database.get_db)
 ):
     try:
-        # Unificamos los dos posibles orígenes del ID de la mascota
-        # Si vino en la URL, usamos ese; si no, usamos el del formulario
         id_final = mascota_id_query if mascota_id_query is not None else mascota_id
 
         contents = await file.read()
@@ -125,7 +121,8 @@ async def predict_emotion(
                     mascota_id=id_final,
                     emocion=emocion_formateada,
                     confianza=round(confianza, 2),
-                    embedding_sample=string_sample
+                    embedding_sample=string_sample,
+                    fecha_hora=datetime.now(ZONA_ECUADOR)
                 )
                 db.add(nuevo_escaneo)
                 db.commit()
@@ -133,7 +130,7 @@ async def predict_emotion(
             else:
                 print(f"ERROR: Se resolvió el mascota_id {id_final}, pero NO EXISTE en la base de datos.")
         else:
-            print("ADVERTENCIA: No se pudo resolver el mascota_id por ningún medio (Query o Form).")
+            print("ADVERTENCIA: No se pudo resolve el mascota_id por ningún medio.")
 
         return {
             "status": "success",
@@ -155,12 +152,10 @@ def registrar_mascota_completa(
     db: Session = Depends(database.get_db)
 ):
     try:
-        # Creación del registro del dueño
         nuevo_dueno = models.Dueno(nombre_dueno=nombre_dueno, celular=celular, direccion=direccion)
         db.add(nuevo_dueno)
         db.flush()
         
-        # Creación de la mascota con el ID de su dueño
         nueva_mascota = models.Mascota(
             dueno_id=nuevo_dueno.id,
             nombre_mascota=nombre_mascota,
@@ -176,41 +171,7 @@ def registrar_mascota_completa(
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e)}
-    
 
-# CONSULTA DESDE REACT NATIVE
-
-@app.get("/mascotas/{mascota_id}/perfil")
-def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
-    try:
-        mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
-        if not mascota:
-            return {"status": "error", "message": "Mascota no encontrada"}
-        
-        # Obtener el conteo total de escaneos reales
-        total_escaneos = db.query(models.HistorialEscaneo).filter(
-            models.HistorialEscaneo.mascota_id == mascota_id
-        ).count()
-        
-        # Obtener la última emoción registrada
-        ultimo_escaneo = db.query(models.HistorialEscaneo).filter(
-            models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.id.desc()).first()
-        
-        ultima_emocion = ultimo_escaneo.emocion.capitalize() if ultimo_escaneo else "Indefinido"
-
-        return {
-            "status": "success",
-            "nombre": mascota.nombre_mascota,
-            "raza": mascota.raza,
-            "edad": mascota.edad_meses, 
-            "racha_actual": mascota.racha_actual,
-            "total_escaneos": total_escaneos,
-            "ultima_emocion": ultima_emocion
-        }
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-    
 @app.get("/mascotas/{mascota_id}/perfil")
 def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
     try:
@@ -254,7 +215,7 @@ def obtener_historial_mascota(mascota_id: int, db: Session = Depends(database.ge
             resultado.append({
                 "id": r.id,
                 "emocion": r.emocion.capitalize() if r.emocion else "Indefinido",
-                "confianza": float(r.confianza) if r.confianza else 0.0, # Convertimos Numeric a float para evitar problemas en JSON
+                "confianza": float(r.confianza) if r.confianza else 0.0, 
                 "fecha": fecha_formateada
             })
         return {"status": "success", "historial": resultado}
@@ -271,8 +232,8 @@ def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get
         
         emociones_base = {"FELIZ": 0, "EMOCIONADO": 0, "TRANQUILO": 0, "TRISTE": 0, "ANSIOSO": 0}
         for emocion, conteo in conteos_raw:
-            if emocion in emociones_base:
-                emociones_base[emocion] = conteo
+            if emocion and emocion.upper() in emociones_base:
+                emociones_base[emocion.upper()] = conteo
 
         dias_semana_map = {"Monday": "L", "Tuesday": "M", "Wednesday": "Mi", "Thursday": "J", "Friday": "V", "Saturday": "S", "Sunday": "D"}
         hoy = date.today()
