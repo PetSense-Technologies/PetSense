@@ -1,42 +1,70 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { createStackNavigator } from '@react-navigation/stack';
 
-// Importación de las pantallas
-import ScannerScreen from './src/screens/ScannerScreen';
+// Importa tus componentes
+import WelcomeScreen from './src/screens/WelcomeScreen';
+import RegistroScreen from './src/screens/RegistroScreen';
+import EscanerScreen from './src/screens/EscanerScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
-import AnalysisScreen from './src/screens/AnalysisScreen';
+import AnalisisScreen from './src/screens/AnalisisScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
-const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
-export default function App() {
+export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: '#244B5A',
-          tabBarInactiveTintColor: '#9CA3AF',
-          tabBarStyle: { height: 65, paddingBottom: 10, paddingTop: 10 },
-          tabBarIcon: ({ color, size }) => {
-            let iconName;
-            // Ionicons
-            if (route.name === 'Escáner') iconName = 'qr-code-outline';
-            else if (route.name === 'Historial') iconName = 'time-outline';
-            else if (route.name === 'Análisis') iconName = 'bar-chart-outline';
-            else if (route.name === 'Perfil') iconName = 'person-outline';
-
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-        })}
+      <Stack.Navigator
+        initialRouteName="Bienvenida"
+        screenOptions={{
+          headerStyle: { backgroundColor: '#2563EB' },
+          headerTintColor: '#FFF',
+          headerTitleAlign: 'center',
+        }}
       >
-        <Tab.Screen name="Escáner" component={ScannerScreen} />
-        <Tab.Screen name="Historial" component={HistoryScreen} />
-        <Tab.Screen name="Análisis" component={AnalysisScreen} />
-        <Tab.Screen name="Perfil" component={ProfileScreen} />
-      </Tab.Navigator>
+        {/* 1. BIENVENIDA */}
+        <Stack.Screen
+          name="Bienvenida"
+          component={WelcomeScreen}
+          options={{ headerShown: false }}
+        />
+
+        {/* 2. REGISTRO (Alimenta la BD real y pasa el mascota_id en la navegación) */}
+        <Stack.Screen
+          name="Registro"
+          component={RegistroScreen}
+          options={{ title: 'Registro Inicial' }}
+        />
+
+        {/* 3. ESCANER */}
+        <Stack.Screen
+          name="Escaner"
+          component={EscanerScreen}
+          options={{ title: 'Escanear Mascota' }}
+        />
+
+        {/* 4. HISTORIAL */}
+        <Stack.Screen
+          name="Historial"
+          component={HistoryScreen}
+          options={{ title: 'Historial de Emociones' }}
+        />
+
+        {/* 5. ANALISIS */}
+        <Stack.Screen
+          name="Analisis"
+          component={AnalisisScreen}
+          options={{ title: 'Análisis de Datos' }}
+        />
+
+        {/* 6. PERFIL */}
+        <Stack.Screen
+          name="Perfil"
+          component={ProfileScreen}
+          options={{ title: 'Mi Perfil' }}
+        />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
