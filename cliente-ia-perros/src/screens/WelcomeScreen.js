@@ -64,7 +64,7 @@ export default function WelcomeScreen({ navigation }) {
     const handleStart = () => {
         // Enrutamiento dinámico hacia la pantalla de Registro
         if (navigation) {
-            navigation.navigate('Register');
+            navigation.navigate('Registro');
         } else {
             console.log("Navegando a Registro...");
         }
