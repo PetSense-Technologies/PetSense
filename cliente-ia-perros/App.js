@@ -6,7 +6,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 // Importa tus componentes
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegistroScreen from './src/screens/RegistroScreen';
-import EscanerScreen from './src/screens/ScannerScreen';
+import ScanerScreen from './src/screens/ScannerScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -41,7 +41,7 @@ export default function AppNavigator() {
         {/* 3. ESCANER */}
         <Stack.Screen
           name="Escaner"
-          component={EscanerScreen}
+          component={ScanerScreen}
           options={{ title: 'Escanear Mascota' }}
         />
 
@@ -55,7 +55,7 @@ export default function AppNavigator() {
         {/* 5. ANALISIS */}
         <Stack.Screen
           name="Analisis"
-          component={AnalisisScreen}
+          component={AnalysisScreen}
           options={{ title: 'Análisis de Datos' }}
         />
 
