@@ -8,7 +8,7 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegistroScreen from './src/screens/RegistroScreen';
 import EscanerScreen from './src/screens/ScannerScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
-import AnalisisScreen from './src/screens/AnalisisScreen';
+import AnalysisScreen from './src/screens/AnalysisScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 
 const Stack = createStackNavigator();
