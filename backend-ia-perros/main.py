@@ -113,7 +113,7 @@ async def predict_emotion(
                     
                     db_mascota.ultima_racha_update = hoy
                 except Exception as racha_err:
-                    print(f"⚠️ Advertencia en racha: {racha_err}")
+                    print(f" Advertencia en racha: {racha_err}")
 
                 emocion_formateada = nombre_emocion.strip().capitalize()
 

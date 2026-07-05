@@ -1,98 +1,290 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    StyleSheet,
+    Text,
+    View,
+    TouchableOpacity,
+    Animated,
+    Dimensions,
+    StatusBar
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+const { width, height } = Dimensions.get('window');
+
 export default function WelcomeScreen({ navigation }) {
+    const [isSplash, setIsSplash] = useState(true);
+
+    // Transiciones suaves
+    const splashOpacity = useRef(new Animated.Value(1)).current;
+    const welcomeOpacity = useRef(new Animated.Value(0)).current;
+
+    // Pulso de huella
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        // Animación de pulso cíclica para el Splash
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.15,
+                    duration: 250,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 250,
+                    useNativeDriver: true,
+                })
+            ])
+        ).start();
+
+        // Temporizador estricto de 0.7 segundos (700ms) para el Splash Screen
+        const timer = setTimeout(() => {
+            // Desvanecemos el Splash e introducimos el Welcome Screen
+            Animated.sequence([
+                Animated.timing(splashOpacity, {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(welcomeOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                })
+            ]).start(() => {
+                setIsSplash(false);
+            });
+        }, 700);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleStart = () => {
+        // Enrutamiento dinámico hacia la pantalla de Registro
+        if (navigation) {
+            navigation.navigate('Register');
+        } else {
+            console.log("Navegando a Registro...");
+        }
+    };
+
+    if (isSplash) {
+        return (
+            <View style={styles.splashContainer}>
+                <StatusBar barStyle="light-content" backgroundColor="#0D1F24" />
+                <Animated.View style={[styles.splashLogoWrapper, { opacity: splashOpacity, transform: [{ scale: pulseAnim }] }]}>
+                    {/* Huella de mascota representativa del Splash */}
+                    <Ionicons name="paw" size={80} color="#FF6D3F" />
+                    <Text style={styles.splashBrand}>PETSENSE</Text>
+                </Animated.View>
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.container}>
-            {/* Zona del Logotipo / Icono */}
-            <View style={styles.logoContainer}>
-                <Text style={styles.logoEmoji}>🐾</Text>
-                <Text style={styles.brand}>PetSense</Text>
-                <Text style={styles.tagline}>Entiende las emociones de tu mejor amigo</Text>
+        <Animated.View style={[styles.welcomeContainer, { opacity: welcomeOpacity }]}>
+            <StatusBar barStyle="light-content" backgroundColor="#0D1F24" />
+
+            {/* Header: Logo superior de PETSENSE */}
+            <View style={styles.header}>
+                <Ionicons name="paw" size={20} color="#FF6D3F" style={styles.headerIcon} />
+                <Text style={styles.headerTitle}>PETSENSE</Text>
             </View>
 
-            {/* Contenido Informativo Corto */}
-            <View style={styles.infoCard}>
-                <Ionicons name="sparkles" size={24} color="#2563EB" style={styles.infoIcon} />
-                <Text style={styles.infoText}>
-                    Utiliza nuestra Inteligencia Artificial para analizar el estado de ánimo de tu mascota a través de fotos en tiempo real.
+            {/* Zona Central: Círculos concéntricos de escaneo y Huella de image_70072b.png */}
+            <View style={styles.centerArea}>
+                <View style={styles.outerGlow}>
+                    <View style={styles.middleGlow}>
+                        <View style={styles.innerGlow}>
+                            <View style={styles.pawBadge}>
+                                <Ionicons name="paw-outline" size={44} color="#FFF" />
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            </View>
+
+            {/* Texto Promocional e Informativo */}
+            <View style={styles.textContainer}>
+                <Text style={styles.tagline}>
+                    Detecta sus emociones <Text style={styles.accentText}>con</Text>
+                </Text>
+                <Text style={styles.accentText}>una sola foto.</Text>
+            </View>
+
+            {/* Bottom: Botón de registro estilizado y Términos */}
+            <View style={styles.footer}>
+                {/* Línea decorativa del indicador de página */}
+                <View style={styles.indicatorLine} />
+
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={handleStart}
+                    activeOpacity={0.85}
+                >
+                    <Text style={styles.buttonText}>Comenzar registro</Text>
+                    <Ionicons name="arrow-forward" size={18} color="#FFF" style={styles.arrowIcon} />
+                </TouchableOpacity>
+
+                <Text style={styles.termsText}>
+                    Al continuar aceptas los Términos y Política de privacidad
                 </Text>
             </View>
-
-            {/* Botón de Acción Principal */}
-            <TouchableOpacity
-                style={styles.btnPrimary}
-                onPress={() => navigation.navigate('Registro')}
-            >
-                <Text style={styles.btnText}>Comenzar Registro</Text>
-                <Ionicons name="arrow-forward" size={20} color="#FFF" />
-            </TouchableOpacity>
-        </View>
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    // Estilos del Splash Screen
+    splashContainer: {
         flex: 1,
-        backgroundColor: '#F1F5F9',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingVertical: 60
-    },
-    logoContainer: {
-        alignItems: 'center',
-        marginTop: 40
-    },
-    logoEmoji: {
-        fontSize: 70,
-        marginBottom: 10
-    },
-    brand: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#1E293B'
-    },
-    tagline: {
-        fontSize: 16,
-        color: '#64748B',
-        marginTop: 8,
-        textAlign: 'center'
-    },
-    infoCard: {
-        backgroundColor: '#FFF',
-        padding: 20,
-        borderRadius: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        elevation: 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-    },
-    infoIcon: {
-        marginRight: 14
-    },
-    infoText: {
-        flex: 1,
-        fontSize: 14,
-        color: '#475569',
-        lineHeight: 20
-    },
-    btnPrimary: {
-        flexDirection: 'row',
-        backgroundColor: '#2563EB',
-        paddingVertical: 16,
-        borderRadius: 14,
+        backgroundColor: '#0D1F24',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 8,
-        elevation: 2
     },
-    btnText: {
+    splashLogoWrapper: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    splashBrand: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FFF',
+        marginTop: 15,
+        letterSpacing: 2,
+    },
+
+    // Estilos del Welcome Screen
+    welcomeContainer: {
+        flex: 1,
+        backgroundColor: '#0D1F24', // Fondo idéntico al de image_70072b.png
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 50,
+        paddingHorizontal: 30,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    headerIcon: {
+        marginRight: 8,
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '900',
+        color: '#FFF',
+        letterSpacing: 1.5,
+    },
+    centerArea: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.4,
+    },
+    // Estilo de los círculos de glow concéntricos
+    outerGlow: {
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: 'rgba(255, 109, 63, 0.02)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.015)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    middleGlow: {
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        backgroundColor: 'rgba(255, 109, 63, 0.03)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.025)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    innerGlow: {
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        backgroundColor: 'rgba(255, 109, 63, 0.04)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    pawBadge: {
+        width: 90,
+        height: 90,
+        borderRadius: 24,
+        backgroundColor: '#1E2D32',
+        borderWidth: 1.5,
+        borderColor: '#293E45',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 6,
+    },
+    textContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    tagline: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#FFF',
+        textAlign: 'center',
+    },
+    accentText: {
+        color: '#FF6D3F',
+        fontWeight: '700',
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 4,
+    },
+    footer: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    indicatorLine: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#FFF',
+        borderRadius: 2,
+        marginBottom: 25,
+        opacity: 0.9,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        backgroundColor: '#FF6D3F',
+        width: width - 60,
+        height: 56,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 15,
+        shadowColor: '#FF6D3F',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+    buttonText: {
         color: '#FFF',
         fontSize: 16,
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        marginRight: 8,
+    },
+    arrowIcon: {
+        marginTop: 1,
+    },
+    termsText: {
+        fontSize: 11,
+        color: 'rgba(255, 255, 255, 0.3)',
+        textAlign: 'center',
+        marginTop: 5,
     }
 });
