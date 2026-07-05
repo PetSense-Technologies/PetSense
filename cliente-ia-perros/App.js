@@ -1,11 +1,13 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Importa tus componentes (Verificados con tus rutas exactas)
+// Importa tus componentes
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import RegistroScreen from './src/screens/RegistroScreen';
 import ScanerScreen from './src/screens/ScannerScreen';
@@ -16,13 +18,12 @@ import ProfileScreen from './src/screens/ProfileScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Creación la barra inferior flotante
+// MENÚ INFERIOR FLOTANTE
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-
         tabBarIcon: ({ color, size, focused }) => {
           let iconName;
           if (route.name === 'EscanerTab') iconName = focused ? 'camera' : 'camera-outline';
@@ -34,27 +35,12 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#64748B',
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
-          marginBottom: 4,
-        },
         tabBarStyle: {
-          position: 'absolute',
-          bottom: 20,
-          left: 16,
-          right: 16,
-          backgroundColor: '#FFF',
-          borderRadius: 24,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          borderTopWidth: 0,
+          position: 'absolute', bottom: 20, left: 16, right: 16,
+          backgroundColor: '#FFF', borderRadius: 24, height: 64,
+          paddingBottom: 8, paddingTop: 8, elevation: 8,
+          shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1, shadowRadius: 8, borderTopWidth: 0,
         },
       })}
     >
@@ -66,39 +52,43 @@ function MainTabs() {
   );
 }
 
-// NAVEGACIÓN GENERAL DE TU APP
+// NAVEGACIÓN GENERAL CON COMPROBACIÓN DE DISPOSITIVO
 export default function AppNavigator() {
+  const [isRegistrado, setIsRegistrado] = useState(null);
+
+  useEffect(() => {
+    const verificarRegistro = async () => {
+      try {
+        // Buscamos si este dispositivo ya tiene un ID guardado
+        const idGuardado = await AsyncStorage.getItem('mascota_id_real');
+        if (idGuardado !== null) {
+          setIsRegistrado(true); // Si ya esta registro lo manda directo al menu
+        } else {
+          setIsRegistrado(false); // Si detecta un dispositivo nuevo manda al menu de registro
+        }
+      } catch (e) {
+        setIsRegistrado(false);
+      }
+    };
+    verificarRegistro();
+  }, []);
+
+  // Mientras lee el almacenamiento local, muestra una pantalla de carga limpia
+  if (isRegistrado === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F1F5F9' }}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Bienvenida"
-        screenOptions={{
-          headerStyle: { backgroundColor: '#2563EB' },
-          headerTintColor: '#FFF',
-          headerTitleAlign: 'center',
-        }}
-      >
-        {/* 1. BIENVENIDA (Pantalla completa sin barra) */}
-        <Stack.Screen
-          name="Bienvenida"
-          component={WelcomeScreen}
-          options={{ headerShown: false }}
-        />
-
-        {/* 2. REGISTRO (Pantalla completa sin barra) */}
-        <Stack.Screen
-          name="Registro"
-          component={RegistroScreen}
-          options={{ title: 'Registro Inicial' }}
-        />
-
-        {/* 3. MENÚ PRINCIPAL FLOTANTE */}
-        {/* Aquí es donde agrupamos las 4 pantallas restantes con la barra inferior */}
-        <Stack.Screen
-          name="MenuPrincipal"
-          component={MainTabs}
-          options={{ headerShown: false }}
-        />
+      {/* Si ya se tiene registrado, la ruta inicial cambia dinámicamente */}
+      <Stack.Navigator initialRouteName={isRegistrado ? "MenuPrincipal" : "Bienvenida"}>
+        <Stack.Screen name="Bienvenida" component={WelcomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Registro" component={RegistroScreen} options={{ title: 'Registro Inicial' }} />
+        <Stack.Screen name="MenuPrincipal" component={MainTabs} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
