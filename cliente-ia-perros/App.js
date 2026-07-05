@@ -21,6 +21,8 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        headerShown: false,
+
         tabBarIcon: ({ color, size, focused }) => {
           let iconName;
           if (route.name === 'EscanerTab') iconName = focused ? 'camera' : 'camera-outline';
@@ -37,7 +39,6 @@ function MainTabs() {
           fontWeight: '500',
           marginBottom: 4,
         },
-        //Efecto píldora flotante despegada del suelo
         tabBarStyle: {
           position: 'absolute',
           bottom: 20,
@@ -48,16 +49,13 @@ function MainTabs() {
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,
-          elevation: 8, // Sombra para Android
-          shadowColor: '#000', // Sombra para iOS
+          elevation: 8,
+          shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
           borderTopWidth: 0,
         },
-        headerStyle: { backgroundColor: '#2563EB' },
-        headerTintColor: '#FFF',
-        headerTitleAlign: 'center',
       })}
     >
       <Tab.Screen name="EscanerTab" component={ScanerScreen} options={{ title: 'Escanear' }} />
