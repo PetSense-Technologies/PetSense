@@ -87,7 +87,7 @@ export default function AppNavigator() {
       {/* Si ya se tiene registrado, la ruta inicial cambia dinámicamente */}
       <Stack.Navigator initialRouteName={isRegistrado ? "MenuPrincipal" : "Bienvenida"}>
         <Stack.Screen name="Bienvenida" component={WelcomeScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Registro" component={RegistroScreen} options={{ title: 'Registro Inicial' }} />
+        <Stack.Screen name="Registro" component={RegistroScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MenuPrincipal" component={MainTabs} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
