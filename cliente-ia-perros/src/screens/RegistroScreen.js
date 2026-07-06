@@ -87,7 +87,7 @@ export default function RegistroScreen({ navigation }) {
                 </View>
                 <View style={styles.headerTextContainer}>
                     <Text style={styles.headerTitle}>Crear cuenta</Text>
-                    <Text style={styles.headerSubtitle}>Empieza a entender a tu perro hoy</Text>
+                    <Text style={styles.headerSubtitle}>Empieza a entender a tu mascota hoy</Text>
                 </View>
             </View>
 
