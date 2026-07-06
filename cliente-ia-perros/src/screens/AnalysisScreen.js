@@ -19,13 +19,13 @@ export default function AnalysisScreen() {
             const data = await res.json();
             const historial = data.historial || data;
 
-            // 1. Cálculo de Bienestar (Puntajes arbitrarios)
-            const scores = { 'FELIZ': 100, 'HAPPY': 100, 'TRANQUILO': 90, 'RELAXED': 90, 'EMOCIONADO': 80, 'EXCITED': 80, 'TRISTE': 50, 'SAD': 50, 'ANSIOSO': 30, 'ANGRY': 30, 'ALERT': 40 };
+            // 1. Cálculo de Bienestar
+            const scores = { 'FELIZ': 100, 'HAPPY': 100, 'TRANQUILO': 90, 'RELAXED': 90, 'EMOCIONADO': 80, 'EXCITED': 80, 'TRISTE': 50, 'SAD': 50, 'ANSIOSO': 30, 'ANGRY': 30, 'ALERT': 40, 'FROWN': 50 };
             let totalScore = 0;
             historial.forEach(h => totalScore += scores[h.emocion?.toUpperCase()] || 70);
             const avgBienestar = Math.round(totalScore / historial.length);
 
-            // 2. Escaneos por día (L, M, Mi, J, V, S, D)
+            // 2. Escaneos por día
             const daysMap = { 0: 'D', 1: 'L', 2: 'M', 3: 'Mi', 4: 'J', 5: 'V', 6: 'S' };
             const scanCounts = [0, 0, 0, 0, 0, 0, 0];
             historial.forEach(h => {
@@ -40,7 +40,17 @@ export default function AnalysisScreen() {
                 const e = h.emocion?.toUpperCase().trim();
                 dist[e] = (dist[e] || 0) + 1;
             });
-            const config = { 'FELIZ': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' }, 'HAPPY': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' }, 'ALERT': { icon: 'warning-outline', color: '#F59E0B', bgColor: '#FFEDD5' }, 'TRISTE': { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' } };
+
+            const config = {
+                'FELIZ': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' },
+                'HAPPY': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' },
+                'ALERT': { icon: 'warning-outline', color: '#F59E0B', bgColor: '#FFEDD5' },
+                'ANGRY': { icon: 'close-circle-outline', color: '#EF4444', bgColor: '#FEE2E2' },
+                'FROWN': { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' },
+                'RELAX': { icon: 'contrast-outline', color: '#3B82F6', bgColor: '#DBEAFE' },
+                'TRISTE': { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' }
+            };
+
             const distribution = Object.keys(dist).map((key, i) => ({
                 id: i, name: key, count: `${dist[key]}x`, percentage: `${Math.round((dist[key] / historial.length) * 100)}%`,
                 ...config[key] || { icon: 'help-circle-outline', color: '#64748B', bgColor: '#E2E8F0' }
@@ -111,8 +121,8 @@ const styles = StyleSheet.create({
     cardTitle: { fontSize: 16, fontWeight: '700', color: '#102A43', marginBottom: 20 },
     chartRow: { flexDirection: 'row', justifyContent: 'space-between', height: 100, alignItems: 'flex-end' },
     chartColumn: { alignItems: 'center', width: '12%' },
-    barContainer: { height: 80, width: '100%', justifyContent: 'flex-end' },
-    barFill: { width: '100%', backgroundColor: '#38BDF8', borderRadius: 4 },
+    barContainer: { height: 60, width: '100%', justifyContent: 'flex-end' },
+    barFill: { width: '80%', backgroundColor: '#38BDF8', borderRadius: 4 },
     chartDay: { fontSize: 12, color: '#627D98', marginTop: 8 },
     emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
     iconBadge: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
