@@ -57,41 +57,23 @@ export default function HistoryScreen() {
     };
 
     const getEmotionDetails = (emocion) => {
-        if (!emocion) {
-            return { color: '#94A3B8', icon: 'help-circle-outline', label: 'Sin Datos' };
-        }
+        if (!emocion) return { color: '#94A3B8', icon: 'help-circle-outline', label: 'Sin Datos' };
 
+        // Normalizamos: mayúsculas, quitamos espacios y comillas
         const emo = emocion.toString().replace(/['"]+/g, '').toUpperCase().trim();
 
+        // Si la palabra contiene ALERT, devolvemos el icono de advertencia directamente
+        if (emo.includes('ALERT')) {
+            return { color: '#F59E0B', icon: 'warning-outline', label: 'Alerta' };
+        }
+
         switch (emo) {
-            case 'FELIZ':
-            case 'HAPPY':
-            case 'SMILE':
-                return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
-
-            case 'EMOCIONADO':
-            case 'EXITED':
-            case 'EXCITED':
-                return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
-
-            case 'TRANQUILO':
-            case 'RELAXED':
-            case 'RELAX':
-                return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
-
-            case 'TRISTE':
-            case 'SAD':
-            case 'FROWN': // 
-                return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
-
-            case 'ANSIOSO':
-            case 'ANGRY':
-            case 'ENOJADO':
-                return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Inquieto/Enojado' };
-
-            default:
-                // Fallback por si la red reporta un campo desconocido
-                return { color: '#94A3B8', icon: 'help-circle-outline', label: emocion };
+            case 'FELIZ': case 'HAPPY': return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
+            case 'EMOCIONADO': case 'EXCITED': return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
+            case 'TRANQUILO': case 'RELAXED': return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
+            case 'TRISTE': case 'SAD': case 'FROWN': return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
+            case 'ANSIOSO': case 'ANGRY': return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Enojado/Bravo' };
+            default: return { color: '#64748B', icon: 'help-circle-outline', label: emo };
         }
     };
 
