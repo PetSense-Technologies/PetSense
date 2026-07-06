@@ -10,7 +10,7 @@ export default function ScannerScreen() {
     const [lastAnalysis, setLastAnalysis] = useState(null);
 
     // Conexión del celular con el backend
-    const BACKEND_URL = "http://192.168.18.3:8000/predict";
+    const BACKEND_URL = "http://192.168.1.52:8000/predict";
 
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {

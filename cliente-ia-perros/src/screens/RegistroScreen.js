@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://192.168.18.3:8000';
+const API_BASE_URL = 'http://192.168.1.52:8000';
 
 export default function RegistroScreen({ navigation }) {
     const [nombreDueno, setNombreDueno] = useState('');
@@ -22,44 +22,34 @@ export default function RegistroScreen({ navigation }) {
         try {
             setLoading(true);
 
-            // 1. Registrar Dueño en el Backend
-            const resDueno = await fetch(`${API_BASE_URL}/duenos/registro`, {
+            // 1. Construimos los parámetros de la URL exactamente como los pide el backend
+            const queryParams = `?nombre_dueno=${encodeURIComponent(nombreDueno)}&celular=${encodeURIComponent(celular)}&direccion=${encodeURIComponent(direccion || '')}&nombre_mascota=${encodeURIComponent(nombreMascota)}&raza=${encodeURIComponent(raza || 'Mestizo')}&edad_meses=${edadMeses ? parseInt(edadMeses) : 0}`;
+
+            // 2. Hacemos una única petición al endpoint maestro
+            const response = await fetch(`${API_BASE_URL}/mascotas/registro${queryParams}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nombre_dueno: nombreDueno,
-                    celular: celular,
-                    direccion: direccion || null
-                }),
+                headers: { 
+                    'Accept': 'application/json' 
+                }
             });
-            const dataDueno = await resDueno.json();
-            if (dataDueno.status !== 'success') throw new Error(dataDueno.message);
 
-            // 2. Registrar Mascota en el Backend vinculada a ese dueño
-            const resMascota = await fetch(`${API_BASE_URL}/mascotas/registro`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    dueno_id: dataDueno.dueno.id,
-                    nombre_mascota: nombreMascota,
-                    raza: raza || 'Mestizo',
-                    edad_meses: edadMeses ? parseInt(edadMeses) : null
-                }),
-            });
-            const dataMascota = await resMascota.json();
-            if (dataMascota.status !== 'success') throw new Error(dataMascota.message);
+            const data = await response.json();
 
-            const mascotaIdGenerado = dataMascota.mascota.id;
+            // 3. Validamos la respuesta exitosa que vimos en Swagger
+            if (data.status !== 'success') {
+                throw new Error(data.message || 'Error al guardar en la base de datos');
+            }
 
-            // 3. Guardamos el ID real en la memoria del teléfono
-            await AsyncStorage.setItem('mascota_id_real', mascotaIdGenerado.toString());
+            // 4. Guardamos el ID real devuelto por el backend
+            await AsyncStorage.setItem('mascota_id_real', data.mascota_id.toString());
 
             Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente.`);
 
-            // Avanzamos al Escáner en tu flujo lineal sin pasar parámetros raros
+            // 5. Avanzamos al Escáner
             navigation.navigate('Escaner');
 
         } catch (error) {
+            console.error("Error capturado:", error);
             Alert.alert('Error en registro', error.message || 'No se pudo conectar con el servidor.');
         } finally {
             setLoading(false);
