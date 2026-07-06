@@ -213,7 +213,7 @@ source venv/bin/activate
 pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic
 
 # 4. Iniciar el servidor local apuntando a tu main.py
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+.\venv\Scripts\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 Nota: Usar --host 0.0.0.0 es mandatorio para que el servidor escuche peticiones desde la red local y tu celular pueda conectarse.
 
 3. Despliegue del Frontend (React Native - Expo)

@@ -68,11 +68,30 @@ export default function HistoryScreen() {
         }
 
         switch (emo) {
-            case 'FELIZ': case 'HAPPY': return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
-            case 'EMOCIONADO': case 'EXCITED': return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
-            case 'TRANQUILO': case 'RELAXED': return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
-            case 'TRISTE': case 'SAD': case 'FROWN': return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
-            case 'ANSIOSO': case 'ANGRY': return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Enojado/Bravo' };
+            case 'FELIZ':
+            case 'HAPPY':
+                return { color: '#10B981', icon: 'happy-outline', label: 'Feliz' };
+
+            case 'EMOCIONADO':
+            case 'EXCITED':
+                return { color: '#F59E0B', icon: 'flame-outline', label: 'Emocionado' };
+
+            case 'TRANQUILO':
+            case 'RELAXED':
+            case 'RELAX':
+            case 'RELAXING':
+            case 'CALM':
+                return { color: '#3B82F6', icon: 'leaf-outline', label: 'Tranquilo' };
+
+            case 'TRISTE':
+            case 'SAD':
+            case 'FROWN':
+                return { color: '#64748B', icon: 'sad-outline', label: 'Triste' };
+
+            case 'ANSIOSO':
+            case 'ANGRY':
+                return { color: '#EF4444', icon: 'alert-circle-outline', label: 'Enojado/Bravo' };
+
             default: return { color: '#64748B', icon: 'help-circle-outline', label: emo };
         }
     };

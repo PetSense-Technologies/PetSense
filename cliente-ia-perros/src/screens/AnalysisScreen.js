@@ -39,9 +39,9 @@ export default function AnalysisScreen() {
                 'FELIZ': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' },
                 'HAPPY': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' },
                 'ALERT': { icon: 'warning-outline', color: '#F59E0B', bgColor: '#FFEDD5' },
-                'ANGRY': { icon: 'close-circle-outline', color: '#EF4444', bgColor: '#FEE2E2' },
+                'ANGRY': { icon: 'alert-circle-outline', color: '#EF4444', bgColor: '#FEE2E2' },
                 'FROWN': { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' },
-                'RELAX': { icon: 'contrast-outline', color: '#3B82F6', bgColor: '#DBEAFE' },
+                'RELAX': { icon: 'leaf-outline', color: '#3B82F6', bgColor: '#DBEAFE' },
                 'TRISTE': { icon: 'sad-outline', color: '#6366F1', bgColor: '#E0E7FF' }
             };
 
