@@ -8,3 +8,12 @@ python -m pip install --upgrade pip
 
 
 python -m pip install SQLAlchemy python-dotenv psycopg2-binary
+
+
+
+Agregar un .env en la raiz de backend-ia-perros con este contenido:
+
+DATABASE_URL=postgresql://postgres.user:password@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+
+---Test conexion a base de datos---
+uvicorn main:app --reload
