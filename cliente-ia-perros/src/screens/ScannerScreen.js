@@ -138,7 +138,7 @@ export default function ScannerScreen() {
 
             {/* Botón: Subir Imagen de Galería */}
             <TouchableOpacity style={styles.btnSecondary} onPress={pickImage} disabled={loading}>
-                <Ionicons name="arrow-up-tray" size={20} color="#3A536B" />
+                <Ionicons name="cloud-upload-outline" size={20} color="#3A536B" />
                 <Text style={styles.btnSecondaryText}>Subir imagen</Text>
             </TouchableOpacity>
 
