@@ -15,13 +15,10 @@ export default function AnalysisScreen() {
             const mascotaId = await AsyncStorage.getItem('mascota_id_real');
             if (!mascotaId) return;
 
-            const res = await fetch(`${API_BASE_URL}/mascotas/${mascotaId}/historial`, {
-                headers: { 'Cache-Control': 'no-cache' } // Forzamos no usar caché
-            });
+            const res = await fetch(`${API_BASE_URL}/mascotas/${mascotaId}/historial`, { headers: { 'Cache-Control': 'no-cache' } });
             const data = await res.json();
             const historial = data.historial || data;
 
-            // Cálculos
             const scores = { 'FELIZ': 100, 'HAPPY': 100, 'TRANQUILO': 90, 'RELAXED': 90, 'EMOCIONADO': 80, 'EXCITED': 80, 'TRISTE': 50, 'SAD': 50, 'ANSIOSO': 30, 'ANGRY': 30, 'ALERT': 40, 'FROWN': 50, 'RELAX': 90 };
             let totalScore = 0;
             historial.forEach(h => totalScore += scores[h.emocion?.toUpperCase()] || 70);
@@ -75,13 +72,16 @@ export default function AnalysisScreen() {
 
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Escaneos por día</Text>
-                <View style={styles.chartRow}>
-                    {stats.weeklyScans.map((item, i) => (
-                        <View key={i} style={styles.chartColumn}>
-                            <View style={styles.barContainer}><View style={[styles.barFill, { height: `${item.count}%` }]} /></View>
-                            <Text style={styles.chartDay}>{item.day}</Text>
-                        </View>
-                    ))}
+                {/* Contenedor del gráfico con margen superior para separar del título */}
+                <View style={styles.chartContainer}>
+                    <View style={styles.chartRow}>
+                        {stats.weeklyScans.map((item, i) => (
+                            <View key={i} style={styles.chartColumn}>
+                                <View style={styles.barContainer}><View style={[styles.barFill, { height: `${item.count}%` }]} /></View>
+                                <Text style={styles.chartDay}>{item.day}</Text>
+                            </View>
+                        ))}
+                    </View>
                 </View>
             </View>
 
@@ -112,12 +112,13 @@ const styles = StyleSheet.create({
     progressBarBackground: { height: 6, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 3, marginTop: 10 },
     progressBarFill: { height: '100%', backgroundColor: '#FFF', borderRadius: 3 },
     card: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, marginBottom: 20 },
-    cardTitle: { fontSize: 16, fontWeight: '700', color: '#102A43', marginBottom: 20 },
-    chartRow: { flexDirection: 'row', justifyContent: 'space-between', height: 80, alignItems: 'flex-end', paddingBottom: 5 },
-    chartColumn: { alignItems: 'center', width: '12%', height: '100%', justifyContent: 'flex-end' },
-    barContainer: { height: 50, width: '100%', justifyContent: 'flex-end' },
+    cardTitle: { fontSize: 16, fontWeight: '700', color: '#102A43', marginBottom: 10 }, // Menos margen bottom
+    chartContainer: { marginTop: 15 }, // Espacio explícito para que no choque
+    chartRow: { flexDirection: 'row', justifyContent: 'space-between', height: 70, alignItems: 'flex-end' },
+    chartColumn: { alignItems: 'center', width: '12%', height: 70 },
+    barContainer: { height: 50, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
     barFill: { width: '70%', backgroundColor: '#38BDF8', borderRadius: 4 },
-    chartDay: { fontSize: 12, color: '#627D98', marginTop: 5 },
+    chartDay: { fontSize: 12, color: '#627D98', height: 20, marginTop: 5 },
     emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
     iconBadge: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     emotionProgressContainer: { flex: 1, marginLeft: 14 },
