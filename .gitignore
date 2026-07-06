@@ -6,3 +6,5 @@ backend-ia-perros/__pycache__/
 # Ignorar paquetes del frontend
 cliente-ia-perros/node_modules/
 cliente-ia-perros/.expo/
+
+commands.txt
