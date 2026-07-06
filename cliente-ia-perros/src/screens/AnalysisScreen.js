@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,39 +7,36 @@ import { API_BASE_URL } from '../config';
 
 export default function AnalysisScreen() {
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({ bienestar: 0, weeklyScans: [], distribution: [], insight: "" });
 
     const fetchAnalysis = async () => {
-        setLoading(true);
         try {
             const mascotaId = await AsyncStorage.getItem('mascota_id_real');
             if (!mascotaId) return;
 
-            const res = await fetch(`${API_BASE_URL}/mascotas/${mascotaId}/historial`);
+            const res = await fetch(`${API_BASE_URL}/mascotas/${mascotaId}/historial`, {
+                headers: { 'Cache-Control': 'no-cache' } // Forzamos no usar caché
+            });
             const data = await res.json();
             const historial = data.historial || data;
 
-            // 1. Cálculo de Bienestar
-            const scores = { 'FELIZ': 100, 'HAPPY': 100, 'TRANQUILO': 90, 'RELAXED': 90, 'EMOCIONADO': 80, 'EXCITED': 80, 'TRISTE': 50, 'SAD': 50, 'ANSIOSO': 30, 'ANGRY': 30, 'ALERT': 40, 'FROWN': 50 };
+            // Cálculos
+            const scores = { 'FELIZ': 100, 'HAPPY': 100, 'TRANQUILO': 90, 'RELAXED': 90, 'EMOCIONADO': 80, 'EXCITED': 80, 'TRISTE': 50, 'SAD': 50, 'ANSIOSO': 30, 'ANGRY': 30, 'ALERT': 40, 'FROWN': 50, 'RELAX': 90 };
             let totalScore = 0;
             historial.forEach(h => totalScore += scores[h.emocion?.toUpperCase()] || 70);
-            const avgBienestar = Math.round(totalScore / historial.length);
+            const avgBienestar = Math.round(totalScore / (historial.length || 1));
 
-            // 2. Escaneos por día
             const daysMap = { 0: 'D', 1: 'L', 2: 'M', 3: 'Mi', 4: 'J', 5: 'V', 6: 'S' };
             const scanCounts = [0, 0, 0, 0, 0, 0, 0];
             historial.forEach(h => {
                 const date = new Date(h.fecha);
-                scanCounts[date.getDay()] += 1;
+                if (!isNaN(date.getTime())) scanCounts[date.getDay()] += 1;
             });
             const weeklyScans = Object.keys(daysMap).map(k => ({ day: daysMap[k], count: scanCounts[k] * 10 }));
 
-            // 3. Distribución
             const dist = {};
-            historial.forEach(h => {
-                const e = h.emocion?.toUpperCase().trim();
-                dist[e] = (dist[e] || 0) + 1;
-            });
+            historial.forEach(h => { const e = h.emocion?.toUpperCase().trim(); dist[e] = (dist[e] || 0) + 1; });
 
             const config = {
                 'FELIZ': { icon: 'happy-outline', color: '#22C55E', bgColor: '#DCFCE7' },
@@ -56,12 +53,11 @@ export default function AnalysisScreen() {
                 ...config[key] || { icon: 'help-circle-outline', color: '#64748B', bgColor: '#E2E8F0' }
             }));
 
-            // 4. Insight
-            const topEmo = Object.keys(dist).reduce((a, b) => dist[a] > dist[b] ? a : b);
+            const topEmo = Object.keys(dist).length > 0 ? Object.keys(dist).reduce((a, b) => dist[a] > dist[b] ? a : b) : "nada";
             const insight = topEmo === 'ALERT' ? "Tu mascota muestra signos de alerta. Revisa si hay ruidos fuertes cerca." : `Tu mascota ha estado principalmente ${topEmo.toLowerCase()} esta semana.`;
 
             setStats({ bienestar: avgBienestar, weeklyScans, distribution, insight });
-        } catch (e) { console.error(e); } finally { setLoading(false); }
+        } catch (e) { console.error(e); } finally { setLoading(false); setRefreshing(false); }
     };
 
     useFocusEffect(useCallback(() => { fetchAnalysis(); }, []));
@@ -69,9 +65,8 @@ export default function AnalysisScreen() {
     if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>;
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAnalysis} />}>
             <Text style={styles.title}>Análisis</Text>
-
             <View style={styles.welfareCard}>
                 <Text style={styles.welfareLabel}>BIENESTAR GENERAL</Text>
                 <Text style={styles.welfareScore}>{stats.bienestar}<Text style={styles.welfareTotal}>/100</Text></Text>
@@ -102,7 +97,6 @@ export default function AnalysisScreen() {
                     </View>
                 ))}
             </View>
-
             <View style={styles.insightCard}><Text style={styles.insightText}>{stats.insight}</Text></View>
         </ScrollView>
     );
@@ -119,11 +113,11 @@ const styles = StyleSheet.create({
     progressBarFill: { height: '100%', backgroundColor: '#FFF', borderRadius: 3 },
     card: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, marginBottom: 20 },
     cardTitle: { fontSize: 16, fontWeight: '700', color: '#102A43', marginBottom: 20 },
-    chartRow: { flexDirection: 'row', justifyContent: 'space-between', height: 100, alignItems: 'flex-end' },
-    chartColumn: { alignItems: 'center', width: '12%' },
-    barContainer: { height: 60, width: '100%', justifyContent: 'flex-end' },
-    barFill: { width: '80%', backgroundColor: '#38BDF8', borderRadius: 4 },
-    chartDay: { fontSize: 12, color: '#627D98', marginTop: 8 },
+    chartRow: { flexDirection: 'row', justifyContent: 'space-between', height: 80, alignItems: 'flex-end', paddingBottom: 5 },
+    chartColumn: { alignItems: 'center', width: '12%', height: '100%', justifyContent: 'flex-end' },
+    barContainer: { height: 50, width: '100%', justifyContent: 'flex-end' },
+    barFill: { width: '70%', backgroundColor: '#38BDF8', borderRadius: 4 },
+    chartDay: { fontSize: 12, color: '#627D98', marginTop: 5 },
     emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
     iconBadge: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     emotionProgressContainer: { flex: 1, marginLeft: 14 },
