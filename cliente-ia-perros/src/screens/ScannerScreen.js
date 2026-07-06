@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } fr
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../config';
 
 export default function ScannerScreen() {
     const [image, setImage] = useState(null);
@@ -10,7 +11,7 @@ export default function ScannerScreen() {
     const [lastAnalysis, setLastAnalysis] = useState(null);
 
     // Conexión del celular con el backend
-    const BACKEND_URL = "http://192.168.18.3:8000/predict";
+    const BACKEND_URL = `${API_BASE_URL}/predict`;
 
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
