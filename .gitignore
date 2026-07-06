@@ -1,7 +1,7 @@
 # Ignorar entorno virtual del backend
 backend-ia-perros/venv/
 backend-ia-perros/__pycache__/
-backend-ia-perros/*.pt
+# backend-ia-perros/*.pt (Comentado para permitir subir los modelos a Git)
 
 # Ignorar paquetes del frontend
 cliente-ia-perros/node_modules/
