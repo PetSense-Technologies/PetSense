@@ -108,7 +108,8 @@ export default function ScannerScreen() {
         <View style={styles.container}>
             {/* Encabezado */}
             <View style={styles.header}>
-                <Text style={styles.brand}>🐾 PetSense</Text>
+
+                <Text style={styles.brand}><Ionicons name="paw" size={20} color="#FF6D3F" /> PetSense</Text>
                 <Text style={styles.tagline}>Analizador de Emociones de tu mascota</Text>
             </View>
 
