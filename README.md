@@ -106,7 +106,11 @@ $$\mathbf{p} = [p_{\text{feliz}}, p_{\text{emocionado}}, p_{\text{tranquilo}}, p
 Se utiliza un operador argmax para determinar la emoción ganadora:
 
 
-$$\text{Emoción ganadora} = \operatorname{argmax}(\mathbf{p})$$
+**Emoción ganadora:**
+
+$$
+\mathrm{argmax}(\mathbf{p})
+$$
 
 Se extrae el valor máximo del vector de probabilidades para asignarlo como el nivel de certeza de la predicción (confianza):
 
