@@ -55,7 +55,9 @@ Capa de Regularización: Capa Dropout configurada al $30\%$ ($0.3$) para apagar 
 Capa de Clasificación Final (Output Layer): Una capa densa final de $5$ neuronas con función de activación Softmax para normalizar las salidas en una distribución de probabilidad de suma igual a $1.0$:
 
 
-$$\operatorname{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}$$
+$$
+\operatorname{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}
+$$
 
 3. Hiperparámetros de Entrenamiento
 
