@@ -6,38 +6,56 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProfileScreen() {
     const [petData, setPetData] = useState({
-        nombre: 'Max',
-        raza: 'Golden Retriever',
-        edad: '3',
-        estado: 'Feliz'
+        nombre: 'Cargando...',
+        raza: '---',
+        edad: '0',
+        estado: 'Normal'
     });
     const [stats, setStats] = useState({ totalEscaneos: '0' });
 
-    // Cargar datos automáticamente al entrar a la pantalla
+    // Configuración visual para los estados dinámicos
+    const statusConfig = {
+        'FELIZ': { icon: 'happy', color: '#15803D', bgColor: '#DCFCE7' },
+        'HAPPY': { icon: 'happy', color: '#15803D', bgColor: '#DCFCE7' },
+        'TRISTE': { icon: 'sad', color: '#1D4ED8', bgColor: '#DBEAFE' },
+        'SAD': { icon: 'sad', color: '#1D4ED8', bgColor: '#DBEAFE' },
+        'ALERT': { icon: 'warning', color: '#B45309', bgColor: '#FFEDD5' },
+        'ALERTA': { icon: 'warning', color: '#B45309', bgColor: '#FFEDD5' },
+        'ANGRY': { icon: 'alert-circle', color: '#B91C1C', bgColor: '#FEE2E2' },
+        'DEFAULT': { icon: 'paw', color: '#475569', bgColor: '#F1F5F9' }
+    };
+
+    const currentStatus = statusConfig[petData.estado?.toUpperCase()] || statusConfig['DEFAULT'];
+
+    // Cargar datos reales al enfocar la pantalla
     useFocusEffect(
         useCallback(() => {
             const loadData = async () => {
                 try {
-                    const nombre = await AsyncStorage.getItem('mascota_nombre');
-                    const raza = await AsyncStorage.getItem('mascota_raza');
-                    const edad = await AsyncStorage.getItem('mascota_edad');
-                    const estado = await AsyncStorage.getItem('ultimo_estado_detectado');
-                    const historial = await AsyncStorage.getItem('historial_escaneos');
+                    // 1. Leer datos básicos del registro
+                    const nombre = await AsyncStorage.getItem('nombreMascota');
+                    const raza = await AsyncStorage.getItem('raza');
+                    const edad = await AsyncStorage.getItem('edadMeses');
 
-                    const listaEscaneos = historial ? JSON.parse(historial) : [];
+                    // 2. Leer estado del último escaneo
+                    const estado = await AsyncStorage.getItem('ultimo_estado_detectado');
+
+                    // 3. Leer historial para el conteo
+                    const historialRaw = await AsyncStorage.getItem('historial_escaneos');
+                    const listaEscaneos = historialRaw ? JSON.parse(historialRaw) : [];
 
                     setPetData({
-                        nombre: nombre || 'Max',
-                        raza: raza || 'Golden Retriever',
-                        edad: edad || '3',
-                        estado: estado || 'Feliz'
+                        nombre: nombre || 'Sin nombre',
+                        raza: raza || 'Raza no definida',
+                        edad: edad || '?',
+                        estado: estado || 'Nuevo'
                     });
 
                     setStats({
                         totalEscaneos: listaEscaneos.length.toString()
                     });
                 } catch (e) {
-                    console.log("Error cargando datos del perfil", e);
+                    console.log("Error cargando datos del perfil:", e);
                 }
             };
             loadData();
@@ -54,21 +72,28 @@ export default function ProfileScreen() {
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <Text style={styles.sectionTitle}>Perfil</Text>
 
+            {/* Tarjeta Principal Dinámica */}
             <View style={styles.profileCard}>
                 <View style={styles.petInfoRow}>
                     <View style={styles.avatarContainer}>
-                        <Ionicons name="paw" size={32} color="#BACCD6" />
+                        {/* El icono cambia si es perro o gato si lo deseas, aquí usamos paw */}
+                        <Ionicons name="paw" size={34} color="#BACCD6" />
                     </View>
                     <View style={styles.petTextContainer}>
                         <Text style={styles.petName}>{petData.nombre}</Text>
                         <Text style={styles.petDetails}>{petData.raza} · {petData.edad} años</Text>
-                        <View style={styles.statusBadge}>
-                            <Ionicons name="happy" size={14} color="#22C55E" />
-                            <Text style={styles.statusText}>{petData.estado}</Text>
+
+                        {/* Badge de Estado Dinámico */}
+                        <View style={[styles.statusBadge, { backgroundColor: currentStatus.bgColor }]}>
+                            <Ionicons name={currentStatus.icon} size={14} color={currentStatus.color} />
+                            <Text style={[styles.statusText, { color: currentStatus.color }]}>
+                                {petData.estado}
+                            </Text>
                         </View>
                     </View>
                 </View>
 
+                {/* Estadísticas Reales */}
                 <View style={styles.statsRow}>
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{stats.totalEscaneos}</Text>
@@ -85,6 +110,7 @@ export default function ProfileScreen() {
                 </View>
             </View>
 
+            {/* Logros */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Logros</Text>
                 {achievements.map((achievement) => (
@@ -118,22 +144,22 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F4F7F9', paddingHorizontal: 24, paddingTop: 50 },
     sectionTitle: { fontSize: 28, fontWeight: 'bold', color: '#102A43', marginBottom: 20 },
-    profileCard: { backgroundColor: '#244B5A', borderRadius: 24, padding: 20, marginBottom: 20 },
+    profileCard: { backgroundColor: '#244B5A', borderRadius: 24, padding: 20, marginBottom: 20, elevation: 5 },
     petInfoRow: { flexDirection: 'row', alignItems: 'center' },
-    avatarContainer: { width: 64, height: 64, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+    avatarContainer: { width: 70, height: 70, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
     petTextContainer: { flex: 1, marginLeft: 16 },
     petName: { fontSize: 26, fontWeight: 'bold', color: '#FFF' },
-    petDetails: { fontSize: 14, color: '#BACCD6', marginTop: 2, marginBottom: 6 },
-    statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#DCFCE7', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, gap: 4 },
-    statusText: { color: '#15803D', fontSize: 13, fontWeight: '600' },
+    petDetails: { fontSize: 14, color: '#BACCD6', marginTop: 2, marginBottom: 8 },
+    statusBadge: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12, gap: 5 },
+    statusText: { fontSize: 13, fontWeight: '700', textTransform: 'capitalize' },
     statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
     statBox: { backgroundColor: 'rgba(255,255,255,0.08)', width: '31%', paddingVertical: 12, borderRadius: 16, alignItems: 'center' },
-    statValue: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
+    statValue: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
     statLabel: { fontSize: 12, color: '#BACCD6', marginTop: 2 },
-    card: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#E4E9F0', marginBottom: 20, elevation: 1 },
+    card: { backgroundColor: '#FFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#E4E9F0', marginBottom: 20, elevation: 2 },
     cardTitle: { fontSize: 16, fontWeight: '700', color: '#102A43', marginBottom: 16 },
-    achievementRow: { flexDirection: 'row', backgroundColor: '#EBF1F5', borderRadius: 16, padding: 14, alignItems: 'center', marginBottom: 12 },
-    achievementIconContainer: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+    achievementRow: { flexDirection: 'row', backgroundColor: '#F8FAFC', borderRadius: 16, padding: 14, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#F1F5F9' },
+    achievementIconContainer: { width: 42, height: 42, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     achievementContent: { flex: 1, marginLeft: 14 },
     achievementTitle: { fontSize: 15, fontWeight: '700', color: '#102A43' },
     achievementDesc: { fontSize: 13, color: '#627D98', marginTop: 2 },
