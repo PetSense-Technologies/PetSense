@@ -56,7 +56,7 @@ Capa de Clasificación Final (Output Layer): Una capa densa final de $5$ neurona
 
 
 ```math
-\operatorname{Softmax}(z_i) = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}
+\operatorname{Softmax}(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{5} e^{z_j}}
 ```
 
 3. Hiperparámetros de Entrenamiento
