@@ -32,22 +32,22 @@ export default function ProfileScreen() {
         useCallback(() => {
             const loadData = async () => {
                 try {
-                    // 1. Leer datos básicos del registro
-                    const nombre = await AsyncStorage.getItem('nombreMascota');
-                    const raza = await AsyncStorage.getItem('raza');
-                    const edad = await AsyncStorage.getItem('edadMeses');
+                    // LLAVES CORREGIDAS PARA COINCIDIR CON EL REGISTRO
+                    const nombre = await AsyncStorage.getItem('mascota_nombre');
+                    const raza = await AsyncStorage.getItem('mascota_raza');
+                    const edad = await AsyncStorage.getItem('mascota_edad');
 
-                    // 2. Leer estado del último escaneo
+                    // Leer estado del último escaneo
                     const estado = await AsyncStorage.getItem('ultimo_estado_detectado');
 
-                    // 3. Leer historial para el conteo
+                    // Leer historial para el conteo
                     const historialRaw = await AsyncStorage.getItem('historial_escaneos');
                     const listaEscaneos = historialRaw ? JSON.parse(historialRaw) : [];
 
                     setPetData({
                         nombre: nombre || 'Sin nombre',
-                        raza: raza || 'Raza no definida',
-                        edad: edad || '?',
+                        raza: raza || 'Mestizo',
+                        edad: edad || '0',
                         estado: estado || 'Nuevo'
                     });
 
@@ -72,18 +72,15 @@ export default function ProfileScreen() {
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <Text style={styles.sectionTitle}>Perfil</Text>
 
-            {/* Tarjeta Principal Dinámica */}
             <View style={styles.profileCard}>
                 <View style={styles.petInfoRow}>
                     <View style={styles.avatarContainer}>
-                        {/* El icono cambia si es perro o gato si lo deseas, aquí usamos paw */}
                         <Ionicons name="paw" size={34} color="#BACCD6" />
                     </View>
                     <View style={styles.petTextContainer}>
                         <Text style={styles.petName}>{petData.nombre}</Text>
                         <Text style={styles.petDetails}>{petData.raza} · {petData.edad} años</Text>
 
-                        {/* Badge de Estado Dinámico */}
                         <View style={[styles.statusBadge, { backgroundColor: currentStatus.bgColor }]}>
                             <Ionicons name={currentStatus.icon} size={14} color={currentStatus.color} />
                             <Text style={[styles.statusText, { color: currentStatus.color }]}>
@@ -93,7 +90,6 @@ export default function ProfileScreen() {
                     </View>
                 </View>
 
-                {/* Estadísticas Reales */}
                 <View style={styles.statsRow}>
                     <View style={styles.statBox}>
                         <Text style={styles.statValue}>{stats.totalEscaneos}</Text>
@@ -110,7 +106,6 @@ export default function ProfileScreen() {
                 </View>
             </View>
 
-            {/* Logros */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Logros</Text>
                 {achievements.map((achievement) => (
