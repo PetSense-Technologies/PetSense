@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     chartRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80 },
     chartColumn: { alignItems: 'center', width: '12%' },
     barContainer: { height: 60, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
-    barFill: { width: 8, backgroundColor: '#38BDF8', borderRadius: 4 },
+    barFill: { width: 8, backgroundColor: '#e8ad41', borderRadius: 4 },
     chartDay: { fontSize: 11, color: '#627D98', marginTop: 8, fontWeight: '600' },
     emotionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
     iconBadge: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },

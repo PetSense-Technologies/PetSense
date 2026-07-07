@@ -9,21 +9,22 @@ export default function ProfileScreen() {
     const [stats, setStats] = useState({ totalEscaneos: '12', racha: 0 }); // Racha inicial 0
     const [recompensas, setRecompensas] = useState([]);
 
-    // Base de datos de Recompensas para la Demo
+    // Recompensas para la Demo
     const listaPremios = [
         { id: 1, rachaReq: 50, titulo: '10% Supermaxi', desc: 'Descuento en comida para mascotas', codigo: 'MAXI-PET-10' },
         { id: 2, rachaReq: 100, titulo: '20% Veterinaria Pedro', desc: 'Descuento en corte de pelaje', codigo: 'PEDRO-CUT-20' },
         { id: 3, rachaReq: 150, titulo: '5% Aqua Park', desc: 'Entrada Pet Friendly con descuento', codigo: 'AQUA-PET-5' },
+        { id: 4, rachaReq: 200, titulo: '15% PetShop El Bosque', desc: 'Juguetes y accesorios', codigo: 'BOSQUE-PET-15' },
+        { id: 5, rachaReq: 300, titulo: 'Baño Gratis', desc: 'En Veterinaria Mundo Animal', codigo: 'FREE-BATH-0' },
+        { id: 6, rachaReq: 500, titulo: 'Kit de Bienvenida', desc: 'Regalo especial en PetSense', codigo: 'GIFT-KIT-500' },
     ];
 
-    // --- FUNCIÓN PARA LA CASA ABIERTA (SIMULACIÓN EN VIVO) ---
     const simularRacha = () => {
-        let nuevaRacha = stats.racha + 50; // Aumenta de 50 en 50 cada vez que tocas
-        if (nuevaRacha > 150) nuevaRacha = 0; // Reinicia después de los 150 para volver a mostrar
+        let nuevaRacha = stats.racha + 50;
+        if (nuevaRacha > 500) nuevaRacha = 0;
 
         setStats(prev => ({ ...prev, racha: nuevaRacha }));
 
-        // Actualizar recompensas visibles instantáneamente
         const ganadas = listaPremios.filter(p => nuevaRacha >= p.rachaReq);
         setRecompensas(ganadas);
     };
@@ -45,7 +46,6 @@ export default function ProfileScreen() {
                     estado: estado || 'Feliz'
                 });
 
-                // Mantenemos los escaneos reales pero la racha la controlamos nosotros para la demo
                 setStats(prev => ({ ...prev, totalEscaneos: lista.length.toString() }));
             };
             loadData();
@@ -54,7 +54,6 @@ export default function ProfileScreen() {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            {/* Header con las dos huellas 🐾 */}
             <Text style={styles.sectionTitle}>
                 <Ionicons name="paw" size={24} color="#FF6D3F" />
                 <Ionicons name="paw" size={18} color="#FF6D3F" style={{ opacity: 0.6 }} />
@@ -82,7 +81,7 @@ export default function ProfileScreen() {
                         <Text style={styles.statLabel}>Escaneos</Text>
                     </View>
 
-                    {/* BOTÓN SECRETO PARA LA DEMO: Al tocar la Racha, aumenta */}
+                    {/* BOTÓN DEMO */}
                     <TouchableOpacity style={styles.statBox} onPress={simularRacha}>
                         <Text style={[styles.statValue, { color: stats.racha > 0 ? '#FFD700' : '#FFF' }]}>
                             {stats.racha}d
