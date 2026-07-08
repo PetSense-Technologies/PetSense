@@ -244,3 +244,6 @@ Conecta tu computadora y tu celular a la misma red Wi-Fi.
 Abre el archivo de configuración de red en tu frontend (ej. src/config.js) y verifica que API_BASE_URL apunte a la IP local exacta de tu máquina (ej. http://aqui_va_tu_url:8000).
 
 Escanea el código QR que se muestra en la terminal de Expo usando la cámara de tu celular (iOS) o la aplicación Expo Go (Android).
+
+En Android si no se te abre o te sale un error de versionamiento en ExpoGo de play store
+Busca en google descargar ExpoGo version 54, descarga el apk e instala y funcionará.
