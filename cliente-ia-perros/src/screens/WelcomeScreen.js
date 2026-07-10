@@ -6,51 +6,58 @@ import {
     TouchableOpacity,
     Animated,
     Dimensions,
-    StatusBar
+    StatusBar,
+    Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen({ navigation }) {
     const [isSplash, setIsSplash] = useState(true);
+    const [isRegistered, setIsRegistered] = useState(false);
 
-    // Transiciones suaves
+    // Animaciones
     const splashOpacity = useRef(new Animated.Value(1)).current;
     const welcomeOpacity = useRef(new Animated.Value(0)).current;
-
-    // Pulso de huella
     const pulseAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
+        // Verificar estado de registro en segundo plano
+        const checkStatus = async () => {
+            const id = await AsyncStorage.getItem('mascota_id_real');
+            setIsRegistered(!!id); // true si existe id, false si no
+        };
+        checkStatus();
+
         // Animación de pulso cíclica para el Splash
         Animated.loop(
             Animated.sequence([
                 Animated.timing(pulseAnim, {
-                    toValue: 1.15,
-                    duration: 250,
+                    toValue: 1.1,
+                    duration: 400,
                     useNativeDriver: true,
                 }),
                 Animated.timing(pulseAnim, {
                     toValue: 1,
-                    duration: 250,
+                    duration: 400,
                     useNativeDriver: true,
                 })
             ])
         ).start();
 
-        // Temporizador estricto de 0.7 segundos (700ms) para el Splash Screen
+        // Temporizador para pasar del Splash al Welcome (700ms)
         const timer = setTimeout(() => {
-            // Desvanecemos el Splash e introducimos el Welcome Screen
             Animated.sequence([
                 Animated.timing(splashOpacity, {
                     toValue: 0,
-                    duration: 200,
+                    duration: 300,
                     useNativeDriver: true,
                 }),
                 Animated.timing(welcomeOpacity, {
                     toValue: 1,
-                    duration: 300,
+                    duration: 400,
                     useNativeDriver: true,
                 })
             ]).start(() => {
@@ -61,12 +68,21 @@ export default function WelcomeScreen({ navigation }) {
         return () => clearTimeout(timer);
     }, []);
 
-    const handleStart = () => {
-        // Enrutamiento dinámico hacia la pantalla de Registro
-        if (navigation) {
+    // Función de navegación inteligente
+    const handleNavigation = async () => {
+        try {
+            const idGuardado = await AsyncStorage.getItem('mascota_id_real');
+
+            if (idGuardado !== null) {
+                // Usuario registrado: Ir al Menú (usamos replace para no volver atrás)
+                navigation.replace('MenuPrincipal');
+            } else {
+                // Usuario nuevo: Ir a Registro
+                navigation.navigate('Registro');
+            }
+        } catch (e) {
+            console.error("Error al leer sesión:", e);
             navigation.navigate('Registro');
-        } else {
-            console.log("Navegando a Registro...");
         }
     };
 
@@ -75,7 +91,6 @@ export default function WelcomeScreen({ navigation }) {
             <View style={styles.splashContainer}>
                 <StatusBar barStyle="light-content" backgroundColor="#0D1F24" />
                 <Animated.View style={[styles.splashLogoWrapper, { opacity: splashOpacity, transform: [{ scale: pulseAnim }] }]}>
-                    {/* Huella de mascota representativa del Splash */}
                     <Ionicons name="paw" size={80} color="#FF6D3F" />
                     <Text style={styles.splashBrand}>PETSENSE</Text>
                 </Animated.View>
@@ -87,26 +102,30 @@ export default function WelcomeScreen({ navigation }) {
         <Animated.View style={[styles.welcomeContainer, { opacity: welcomeOpacity }]}>
             <StatusBar barStyle="light-content" backgroundColor="#0D1F24" />
 
-            {/* Header: Logo superior de PETSENSE */}
+            {/* Header */}
             <View style={styles.header}>
                 <Ionicons name="paw" size={20} color="#FF6D3F" style={styles.headerIcon} />
                 <Text style={styles.headerTitle}>PETSENSE</Text>
             </View>
 
-            {/* Zona Central: Círculos concéntricos de escaneo y Huella de image_70072b.png */}
+            {/* Zona Central con el nuevo Logo */}
             <View style={styles.centerArea}>
                 <View style={styles.outerGlow}>
                     <View style={styles.middleGlow}>
                         <View style={styles.innerGlow}>
-                            <View style={styles.pawBadge}>
-                                <Ionicons name="paw-outline" size={44} color="#FFF" />
+                            <View style={styles.logoContainer}>
+                                <Image
+                                    source={require('../../assets/dog_logo.png')} // RUTA CORREGIDA PARA TU ESTRUCTURA
+                                    style={styles.logoImage}
+                                    resizeMode="contain"
+                                />
                             </View>
                         </View>
                     </View>
                 </View>
             </View>
 
-            {/* Texto Promocional e Informativo */}
+            {/* Texto Promocional */}
             <View style={styles.textContainer}>
                 <Text style={styles.tagline}>
                     Detecta sus emociones <Text style={styles.accentText}>con</Text>
@@ -114,17 +133,18 @@ export default function WelcomeScreen({ navigation }) {
                 <Text style={styles.accentText}>una sola foto.</Text>
             </View>
 
-            {/* Bottom: Botón de registro estilizado y Términos */}
+            {/* Footer y Botón */}
             <View style={styles.footer}>
-                {/* Línea decorativa del indicador de página */}
                 <View style={styles.indicatorLine} />
 
                 <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={handleStart}
+                    onPress={handleNavigation}
                     activeOpacity={0.85}
                 >
-                    <Text style={styles.buttonText}>Comenzar registro</Text>
+                    <Text style={styles.buttonText}>
+                        {isRegistered ? "Continuar" : "Comenzar registro"}
+                    </Text>
                     <Ionicons name="arrow-forward" size={18} color="#FFF" style={styles.arrowIcon} />
                 </TouchableOpacity>
 
@@ -137,7 +157,6 @@ export default function WelcomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-    // Estilos del Splash Screen
     splashContainer: {
         flex: 1,
         backgroundColor: '#0D1F24',
@@ -145,7 +164,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     splashLogoWrapper: {
-        justifyContent: 'center',
         alignItems: 'center',
     },
     splashBrand: {
@@ -155,11 +173,9 @@ const styles = StyleSheet.create({
         marginTop: 15,
         letterSpacing: 2,
     },
-
-    // Estilos del Welcome Screen
     welcomeContainer: {
         flex: 1,
-        backgroundColor: '#0D1F24', // Fondo idéntico al de image_70072b.png
+        backgroundColor: '#0D1F24',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingVertical: 50,
@@ -184,11 +200,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: height * 0.4,
     },
-    // Estilo de los círculos de glow concéntricos
     outerGlow: {
-        width: 220,
-        height: 220,
-        borderRadius: 110,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
         backgroundColor: 'rgba(255, 109, 63, 0.02)',
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.015)',
@@ -196,9 +211,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     middleGlow: {
-        width: 180,
-        height: 180,
-        borderRadius: 90,
+        width: 190,
+        height: 190,
+        borderRadius: 95,
         backgroundColor: 'rgba(255, 109, 63, 0.03)',
         borderWidth: 1.5,
         borderColor: 'rgba(255, 255, 255, 0.025)',
@@ -213,37 +228,38 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    pawBadge: {
-        width: 90,
-        height: 90,
-        borderRadius: 24,
+    logoContainer: {
+        width: 110,
+        height: 110,
+        borderRadius: 55, // Circular para integrar mejor la imagen del perro
         backgroundColor: '#1E2D32',
-        borderWidth: 1.5,
-        borderColor: '#293E45',
         justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#293E45',
+        elevation: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 5,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.4,
+        shadowRadius: 8,
+    },
+    logoImage: {
+        width: '90%',
+        height: '90%',
     },
     textContainer: {
         alignItems: 'center',
         marginBottom: 20,
     },
     tagline: {
-        fontSize: 18,
+        fontSize: 19,
         fontWeight: '600',
         color: '#FFF',
-        textAlign: 'center',
     },
     accentText: {
         color: '#FF6D3F',
         fontWeight: '700',
-        fontSize: 18,
-        textAlign: 'center',
-        marginTop: 4,
     },
     footer: {
         width: '100%',
@@ -255,31 +271,31 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         borderRadius: 2,
         marginBottom: 25,
-        opacity: 0.9,
+        opacity: 0.8,
     },
     actionButton: {
         flexDirection: 'row',
         backgroundColor: '#FF6D3F',
         width: width - 60,
-        height: 56,
-        borderRadius: 16,
+        height: 58,
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 15,
         shadowColor: '#FF6D3F',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.4,
         shadowRadius: 10,
-        elevation: 5,
+        elevation: 8,
     },
     buttonText: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: 'bold',
-        marginRight: 8,
+        marginRight: 10,
     },
     arrowIcon: {
-        marginTop: 1,
+        marginTop: 2,
     },
     termsText: {
         fontSize: 11,

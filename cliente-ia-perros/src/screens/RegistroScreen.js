@@ -15,7 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-const API_BASE_URL = 'http://192.168.18.3:8000';
+//const API_BASE_URL = 'http://192.168.18.3:8000'; //Mi red WIFI
+const API_BASE_URL = 'http://172.20.10.5:8000'; //Mi red WIFI
+
 
 export default function RegistroScreen({ navigation }) {
     const [nombreDueno, setNombreDueno] = useState('');

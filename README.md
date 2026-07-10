@@ -22,6 +22,9 @@ El núcleo inteligente de PetSense es una Red Neuronal Convolucional (CNN) optim
        [ INFERENCIA SOFTMAX ] -> Probabilidades de las 5 Emociones
 
 
+## Comando para saber el database.py
+python analisis_modelo.py --- dentro del backend
+
 1. Preparación del Dataset y Preprocesamiento
 
 Aumento de Datos (Data Augmentation): Para prevenir el sobreajuste (overfitting) provocado por las variaciones lumínicas y diferencias morfológicas entre razas (ej. perros braquicéfalos frente a hocicos alargados), se aplicó un pipeline de distorsión controlada en memoria:
@@ -213,7 +216,7 @@ source venv/bin/activate
 pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic
 
 # 4. Iniciar el servidor local apuntando a tu main.py
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+.\venv\Scripts\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 Nota: Usar --host 0.0.0.0 es mandatorio para que el servidor escuche peticiones desde la red local y tu celular pueda conectarse.
 
 3. Despliegue del Frontend (React Native - Expo)

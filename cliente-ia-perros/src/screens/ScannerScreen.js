@@ -10,7 +10,9 @@ export default function ScannerScreen() {
     const [lastAnalysis, setLastAnalysis] = useState(null);
 
     // Conexión del celular con el backend
-    const BACKEND_URL = "http://192.168.18.3:8000/predict";
+    //const BACKEND_URL = "http://192.168.18.3:8000/predict"; //Mi red WIFI
+    const BACKEND_URL = "http://172.20.10.5:8000/predict"; //Datos
+
 
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
@@ -108,7 +110,8 @@ export default function ScannerScreen() {
         <View style={styles.container}>
             {/* Encabezado */}
             <View style={styles.header}>
-                <Text style={styles.brand}>🐾 PetSense</Text>
+
+                <Text style={styles.brand}><Ionicons name="paw" size={20} color="#FF6D3F" /> PetSense</Text>
                 <Text style={styles.tagline}>Analizador de Emociones de tu mascota</Text>
             </View>
 
@@ -138,7 +141,7 @@ export default function ScannerScreen() {
 
             {/* Botón: Subir Imagen de Galería */}
             <TouchableOpacity style={styles.btnSecondary} onPress={pickImage} disabled={loading}>
-                <Ionicons name="arrow-up-tray" size={20} color="#3A536B" />
+                <Ionicons name="cloud-upload-outline" size={20} color="#3A536B" />
                 <Text style={styles.btnSecondaryText}>Subir imagen</Text>
             </TouchableOpacity>
 
