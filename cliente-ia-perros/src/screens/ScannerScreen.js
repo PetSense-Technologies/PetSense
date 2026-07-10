@@ -14,6 +14,13 @@ export default function ScannerScreen() {
     // Conexión del celular con el backend
     const BACKEND_URL = `${API_BASE_URL}/predict`;
 
+    // Función para reiniciar el escáner
+    const resetScanner = () => {
+        setImage(null);
+        setLastAnalysis(null);
+        setErrorMessage(null);
+    };
+
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
         setLoading(true);
@@ -25,7 +32,7 @@ export default function ScannerScreen() {
             const idGuardado = await AsyncStorage.getItem('mascota_id_real');
             const idMascota = idGuardado ? idGuardado : '1';
 
-            console.log(`Enviando imagen para la mascota ID aislada: ${idMascota}`);
+            console.log(`Enviando imagen para la mascota ID: ${idMascota}`);
 
             // 2. Metemos tanto el archivo como el ID dentro de FormData
             let formData = new FormData();
@@ -36,7 +43,7 @@ export default function ScannerScreen() {
             });
             formData.append('mascota_id', idMascota);
 
-            // 3. Hacemos la petición limpia a /predict sin parámetros quemados en la URL
+            // 3. Hacemos la petición al backend
             const response = await fetch(BACKEND_URL, {
                 method: 'POST',
                 body: formData,
@@ -71,13 +78,13 @@ export default function ScannerScreen() {
                 // Caso específico: No es un perro
                 setErrorMessage({
                     tipo: 'no_perro',
-                    mensaje: data.detalle_gemini || 'La imagen no contiene un perro',
-                    detalle: 'Por favor, sube una foto de tu mascota canina'
+                    mensaje: 'No es su mascota',
+                    detalle: data.detalle_gemini || 'La imagen no contiene un perro. Por favor, sube una foto de tu mascota canina.'
                 });
 
                 Alert.alert(
                     "🐕 No es su mascota",
-                    `La imagen analizada no contiene un perro.\n\n${data.detalle_gemini || 'Por favor, intenta con otra foto'}`,
+                    `La imagen analizada no contiene un perro.\n\n${data.detalle_gemini || 'Por favor, intenta con otra foto de tu mascota'}`,
                     [{ text: "Entendido" }]
                 );
             }
@@ -85,22 +92,22 @@ export default function ScannerScreen() {
                 // Otros errores
                 setErrorMessage({
                     tipo: 'error_general',
-                    mensaje: data.message || 'Error al analizar la imagen',
-                    detalle: 'Intenta nuevamente'
+                    mensaje: 'Error en el análisis',
+                    detalle: data.message || 'Ocurrió un error al analizar la imagen'
                 });
 
                 Alert.alert(
                     "❌ Error en el análisis",
-                    data.message || "No se pudo procesar la imagen",
+                    data.message || "No se pudo procesar la imagen correctamente",
                     [{ text: "OK" }]
                 );
             }
         } catch (error) {
-            console.error(error);
+            console.error('Error en uploadImage:', error);
             setErrorMessage({
                 tipo: 'conexion',
                 mensaje: 'Error de conexión',
-                detalle: 'No se pudo conectar con el servidor'
+                detalle: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.'
             });
             
             Alert.alert(
@@ -113,18 +120,15 @@ export default function ScannerScreen() {
         }
     };
 
-    // Función para reiniciar el estado y tomar una nueva foto
-    const resetScanner = () => {
-        setImage(null);
-        setLastAnalysis(null);
-        setErrorMessage(null);
-    };
-
     // Opción 1: Abrir la Cámara Nativa
     const takePhoto = async () => {
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
         if (permissionResult.granted === false) {
-            alert("¡Se requieren permisos para acceder a la cámara!");
+            Alert.alert(
+                "Permiso requerido",
+                "Se necesitan permisos para acceder a la cámara",
+                [{ text: "OK" }]
+            );
             return;
         }
 
@@ -144,7 +148,11 @@ export default function ScannerScreen() {
     const pickImage = async () => {
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (permissionResult.granted === false) {
-            alert("¡Se requieren permisos para acceder a la galería!");
+            Alert.alert(
+                "Permiso requerido",
+                "Se necesitan permisos para acceder a la galería",
+                [{ text: "OK" }]
+            );
             return;
         }
 
@@ -179,6 +187,7 @@ export default function ScannerScreen() {
                         <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu mascota</Text>
                     </View>
                 )}
+                
                 {loading && (
                     <View style={styles.loadingOverlay}>
                         <ActivityIndicator size="large" color="#4F46E5" />
@@ -188,10 +197,17 @@ export default function ScannerScreen() {
                 
                 {/* Mostrar mensaje de error en la imagen si existe */}
                 {errorMessage && !loading && (
-                    <View style={styles.errorOverlay}>
-                        <Ionicons name="warning-outline" size={40} color="#EF4444" />
-                        <Text style={styles.errorOverlayText}>{errorMessage.mensaje}</Text>
-                        <Text style={styles.errorOverlaySubtext}>{errorMessage.detalle}</Text>
+                    <View style={[
+                        styles.errorOverlay,
+                        errorMessage.tipo === 'no_perro' && styles.errorOverlayNoPerro
+                    ]}>
+                        <Ionicons 
+                            name={errorMessage.tipo === 'no_perro' ? "paw-outline" : "warning-outline"} 
+                            size={50} 
+                            color={errorMessage.tipo === 'no_perro' ? "#F59E0B" : "#EF4444"} 
+                        />
+                        <Text style={styles.errorOverlayTitle}>{errorMessage.mensaje}</Text>
+                        <Text style={styles.errorOverlayText}>{errorMessage.detalle}</Text>
                         <TouchableOpacity style={styles.resetButton} onPress={resetScanner}>
                             <Text style={styles.resetButtonText}>Intentar de nuevo</Text>
                         </TouchableOpacity>
@@ -200,13 +216,21 @@ export default function ScannerScreen() {
             </View>
 
             {/* Botón: Tomar Foto Nativa */}
-            <TouchableOpacity style={styles.btnPrimary} onPress={takePhoto} disabled={loading}>
+            <TouchableOpacity 
+                style={[styles.btnPrimary, loading && styles.btnDisabled]} 
+                onPress={takePhoto} 
+                disabled={loading}
+            >
                 <Ionicons name="camera" size={20} color="#FFF" />
                 <Text style={styles.btnPrimaryText}>Tomar foto</Text>
             </TouchableOpacity>
 
             {/* Botón: Subir Imagen de Galería */}
-            <TouchableOpacity style={styles.btnSecondary} onPress={pickImage} disabled={loading}>
+            <TouchableOpacity 
+                style={[styles.btnSecondary, loading && styles.btnDisabled]} 
+                onPress={pickImage} 
+                disabled={loading}
+            >
                 <Ionicons name="cloud-upload-outline" size={20} color="#3A536B" />
                 <Text style={styles.btnSecondaryText}>Subir imagen</Text>
             </TouchableOpacity>
@@ -215,26 +239,59 @@ export default function ScannerScreen() {
             {errorMessage && !loading && (
                 <TouchableOpacity style={styles.btnReset} onPress={resetScanner}>
                     <Ionicons name="refresh-outline" size={20} color="#FFF" />
-                    <Text style={styles.btnResetText}>Nueva foto</Text>
+                    <Text style={styles.btnResetText}>Tomar nueva foto</Text>
                 </TouchableOpacity>
             )}
 
             {/* Tarjeta de Resultados (Se dibuja si existe un análisis previo y no hay error) */}
             {lastAnalysis && !errorMessage && (
                 <View style={styles.resultCard}>
-                    <View style={styles.iconBadge}>
-                        <Ionicons name="happy-outline" size={26} color="#22C55E" />
+                    <View style={[
+                        styles.iconBadge,
+                        lastAnalysis.emocion === 'FELIZ' || lastAnalysis.emocion === 'EMOCIONADO' 
+                            ? styles.iconBadgeFeliz 
+                            : styles.iconBadgeNeutral
+                    ]}>
+                        <Ionicons 
+                            name={
+                                lastAnalysis.emocion === 'FELIZ' ? "happy-outline" :
+                                lastAnalysis.emocion === 'EMOCIONADO' ? "heart-outline" :
+                                lastAnalysis.emocion === 'TRANQUILO' ? "bed-outline" :
+                                lastAnalysis.emocion === 'TRISTE' ? "sad-outline" :
+                                "help-circle-outline"
+                            } 
+                            size={26} 
+                            color={
+                                lastAnalysis.emocion === 'FELIZ' || lastAnalysis.emocion === 'EMOCIONADO' 
+                                    ? "#22C55E" 
+                                    : "#6B7280"
+                            } 
+                        />
                     </View>
                     <View style={styles.resultTextContainer}>
                         <Text style={styles.resultLabel}>Último análisis · {lastAnalysis.hora}</Text>
                         <Text style={styles.resultData}>
-                            Tu mascota estaba <Text style={{ fontWeight: 'bold' }}>{lastAnalysis.emocion} · {lastAnalysis.confianza}%</Text>
+                            Tu mascota está <Text style={[
+                                styles.resultEmphasis,
+                                lastAnalysis.emocion === 'FELIZ' || lastAnalysis.emocion === 'EMOCIONADO' 
+                                    ? styles.textGreen 
+                                    : styles.textGray
+                            ]}>
+                                {lastAnalysis.emocion} · {lastAnalysis.confianza}%
+                            </Text>
                         </Text>
                         {lastAnalysis.mensajeGemini && (
-                            <Text style={styles.resultSubtext}>✅ Verificado: {lastAnalysis.mensajeGemini}</Text>
+                            <Text style={styles.resultSubtext}>
+                                <Ionicons name="checkmark-circle" size={14} color="#22C55E" /> 
+                                {' '}{lastAnalysis.mensajeGemini}
+                            </Text>
                         )}
                     </View>
-                    <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
+                    <Ionicons 
+                        name="checkmark-circle" 
+                        size={24} 
+                        color="#22C55E" 
+                    />
                 </View>
             )}
         </View>
@@ -242,10 +299,25 @@ export default function ScannerScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F4F7F9', paddingHorizontal: 24, paddingTop: 50 },
-    header: { marginBottom: 20 },
-    brand: { fontSize: 26, fontWeight: 'bold', color: '#102A43' },
-    tagline: { fontSize: 15, color: '#486581', marginTop: 4 },
+    container: { 
+        flex: 1, 
+        backgroundColor: '#F4F7F9', 
+        paddingHorizontal: 24, 
+        paddingTop: 50 
+    },
+    header: { 
+        marginBottom: 20 
+    },
+    brand: { 
+        fontSize: 26, 
+        fontWeight: 'bold', 
+        color: '#102A43' 
+    },
+    tagline: { 
+        fontSize: 15, 
+        color: '#486581', 
+        marginTop: 4 
+    },
     dashedContainer: {
         width: '100%',
         height: 280,
@@ -260,16 +332,33 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         position: 'relative'
     },
-    fullImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-    emptyState: { alignItems: 'center', paddingHorizontal: 40 },
-    emptyText: { textAlign: 'center', color: '#627D98', fontSize: 15, marginTop: 12, lineHeight: 22 },
+    fullImage: { 
+        width: '100%', 
+        height: '100%', 
+        resizeMode: 'cover' 
+    },
+    emptyState: { 
+        alignItems: 'center', 
+        paddingHorizontal: 40 
+    },
+    emptyText: { 
+        textAlign: 'center', 
+        color: '#627D98', 
+        fontSize: 15, 
+        marginTop: 12, 
+        lineHeight: 22 
+    },
     loadingOverlay: { 
         ...StyleSheet.absoluteFillObject, 
         backgroundColor: 'rgba(240,244,248,0.85)', 
         justifyContent: 'center', 
         alignItems: 'center' 
     },
-    loadingText: { marginTop: 10, color: '#102A43', fontWeight: '600' },
+    loadingText: { 
+        marginTop: 10, 
+        color: '#102A43', 
+        fontWeight: '600' 
+    },
     errorOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(254, 242, 242, 0.95)',
@@ -277,26 +366,31 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20
     },
-    errorOverlayText: {
-        fontSize: 18,
+    errorOverlayNoPerro: {
+        backgroundColor: 'rgba(255, 251, 235, 0.95)',
+    },
+    errorOverlayTitle: {
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#DC2626',
         marginTop: 12,
         textAlign: 'center'
     },
-    errorOverlaySubtext: {
-        fontSize: 14,
+    errorOverlayText: {
+        fontSize: 15,
         color: '#6B7280',
         marginTop: 8,
         textAlign: 'center',
-        paddingHorizontal: 20
+        paddingHorizontal: 20,
+        lineHeight: 22
     },
     resetButton: {
         marginTop: 20,
         backgroundColor: '#DC2626',
         paddingHorizontal: 24,
         paddingVertical: 12,
-        borderRadius: 12
+        borderRadius: 12,
+        elevation: 2
     },
     resetButtonText: {
         color: '#FFF',
@@ -315,7 +409,11 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         elevation: 2
     },
-    btnPrimaryText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+    btnPrimaryText: { 
+        color: '#FFF', 
+        fontSize: 16, 
+        fontWeight: 'bold' 
+    },
     btnSecondary: {
         flexDirection: 'row',
         backgroundColor: '#E4ECF5',
@@ -329,7 +427,14 @@ const styles = StyleSheet.create({
         gap: 10,
         marginBottom: 20
     },
-    btnSecondaryText: { color: '#244B5A', fontSize: 16, fontWeight: '600' },
+    btnSecondaryText: { 
+        color: '#244B5A', 
+        fontSize: 16, 
+        fontWeight: '600' 
+    },
+    btnDisabled: {
+        opacity: 0.6
+    },
     btnReset: {
         flexDirection: 'row',
         backgroundColor: '#EF4444',
@@ -339,9 +444,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         gap: 10,
-        marginBottom: 12
+        marginBottom: 12,
+        elevation: 2
     },
-    btnResetText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+    btnResetText: { 
+        color: '#FFF', 
+        fontSize: 16, 
+        fontWeight: 'bold' 
+    },
     resultCard: {
         flexDirection: 'row',
         backgroundColor: '#FFF',
@@ -352,9 +462,45 @@ const styles = StyleSheet.create({
         borderColor: '#E4E9F0',
         elevation: 1
     },
-    iconBadge: { width: 44, height: 44, backgroundColor: '#DCFCE7', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    resultTextContainer: { flex: 1, marginLeft: 14 },
-    resultLabel: { fontSize: 12, color: '#627D98', marginBottom: 2 },
-    resultData: { fontSize: 15, color: '#102A43' },
-    resultSubtext: { fontSize: 12, color: '#22C55E', marginTop: 4 }
+    iconBadge: { 
+        width: 44, 
+        height: 44, 
+        backgroundColor: '#DCFCE7', 
+        borderRadius: 12, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+    },
+    iconBadgeFeliz: {
+        backgroundColor: '#DCFCE7'
+    },
+    iconBadgeNeutral: {
+        backgroundColor: '#F3F4F6'
+    },
+    resultTextContainer: { 
+        flex: 1, 
+        marginLeft: 14 
+    },
+    resultLabel: { 
+        fontSize: 12, 
+        color: '#627D98', 
+        marginBottom: 2 
+    },
+    resultData: { 
+        fontSize: 15, 
+        color: '#102A43' 
+    },
+    resultEmphasis: {
+        fontWeight: 'bold'
+    },
+    textGreen: {
+        color: '#22C55E'
+    },
+    textGray: {
+        color: '#6B7280'
+    },
+    resultSubtext: { 
+        fontSize: 12, 
+        color: '#22C55E', 
+        marginTop: 4 
+    }
 });
