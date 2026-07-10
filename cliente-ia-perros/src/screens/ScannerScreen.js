@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,7 @@ export default function ScannerScreen() {
     const [image, setImage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [lastAnalysis, setLastAnalysis] = useState(null);
+    const [errorMessage, setErrorMessage] = useState(null);
 
     // Conexión del celular con el backend
     const BACKEND_URL = `${API_BASE_URL}/predict`;
@@ -16,6 +17,8 @@ export default function ScannerScreen() {
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
         setLoading(true);
+        setErrorMessage(null);
+        setLastAnalysis(null);
 
         try {
             // 1. Se lee el ID guardado en el registro inicial
@@ -44,6 +47,7 @@ export default function ScannerScreen() {
 
             const data = await response.json();
 
+            // Manejar diferentes estados de respuesta
             if (data.status === 'success') {
                 const ahora = new Date();
                 const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -51,17 +55,69 @@ export default function ScannerScreen() {
                 setLastAnalysis({
                     hora: `Hoy ${horaFormateada}`,
                     emocion: data.emotion,
-                    confianza: data.confidence
+                    confianza: data.confidence,
+                    esPerro: true,
+                    mensajeGemini: data.verificacion_gemini?.mensaje || 'Verificación exitosa'
                 });
-            } else {
-                alert("Error de análisis: " + data.message);
+
+                // Mostrar notificación de éxito
+                Alert.alert(
+                    "✅ Análisis completado",
+                    `Tu mascota está ${data.emotion} con un ${data.confidence}% de confianza`,
+                    [{ text: "OK" }]
+                );
+            } 
+            else if (data.status === 'error' && data.message === 'No es su mascota') {
+                // Caso específico: No es un perro
+                setErrorMessage({
+                    tipo: 'no_perro',
+                    mensaje: data.detalle_gemini || 'La imagen no contiene un perro',
+                    detalle: 'Por favor, sube una foto de tu mascota canina'
+                });
+
+                Alert.alert(
+                    "🐕 No es su mascota",
+                    `La imagen analizada no contiene un perro.\n\n${data.detalle_gemini || 'Por favor, intenta con otra foto'}`,
+                    [{ text: "Entendido" }]
+                );
+            }
+            else {
+                // Otros errores
+                setErrorMessage({
+                    tipo: 'error_general',
+                    mensaje: data.message || 'Error al analizar la imagen',
+                    detalle: 'Intenta nuevamente'
+                });
+
+                Alert.alert(
+                    "❌ Error en el análisis",
+                    data.message || "No se pudo procesar la imagen",
+                    [{ text: "OK" }]
+                );
             }
         } catch (error) {
             console.error(error);
-            alert("No se pudo conectar con el servidor IA");
+            setErrorMessage({
+                tipo: 'conexion',
+                mensaje: 'Error de conexión',
+                detalle: 'No se pudo conectar con el servidor'
+            });
+            
+            Alert.alert(
+                "⚠️ Error de conexión",
+                "No se pudo conectar con el servidor de IA. Verifica tu conexión a internet.",
+                [{ text: "OK" }]
+            );
         } finally {
             setLoading(false);
         }
+    };
+
+    // Función para reiniciar el estado y tomar una nueva foto
+    const resetScanner = () => {
+        setImage(null);
+        setLastAnalysis(null);
+        setErrorMessage(null);
     };
 
     // Opción 1: Abrir la Cámara Nativa
@@ -129,6 +185,18 @@ export default function ScannerScreen() {
                         <Text style={styles.loadingText}>Analizando con IA...</Text>
                     </View>
                 )}
+                
+                {/* Mostrar mensaje de error en la imagen si existe */}
+                {errorMessage && !loading && (
+                    <View style={styles.errorOverlay}>
+                        <Ionicons name="warning-outline" size={40} color="#EF4444" />
+                        <Text style={styles.errorOverlayText}>{errorMessage.mensaje}</Text>
+                        <Text style={styles.errorOverlaySubtext}>{errorMessage.detalle}</Text>
+                        <TouchableOpacity style={styles.resetButton} onPress={resetScanner}>
+                            <Text style={styles.resetButtonText}>Intentar de nuevo</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </View>
 
             {/* Botón: Tomar Foto Nativa */}
@@ -143,8 +211,16 @@ export default function ScannerScreen() {
                 <Text style={styles.btnSecondaryText}>Subir imagen</Text>
             </TouchableOpacity>
 
-            {/* Tarjeta de Resultados (Se dibuja si existe un análisis previo) */}
-            {lastAnalysis && (
+            {/* Botón de reinicio cuando hay error */}
+            {errorMessage && !loading && (
+                <TouchableOpacity style={styles.btnReset} onPress={resetScanner}>
+                    <Ionicons name="refresh-outline" size={20} color="#FFF" />
+                    <Text style={styles.btnResetText}>Nueva foto</Text>
+                </TouchableOpacity>
+            )}
+
+            {/* Tarjeta de Resultados (Se dibuja si existe un análisis previo y no hay error) */}
+            {lastAnalysis && !errorMessage && (
                 <View style={styles.resultCard}>
                     <View style={styles.iconBadge}>
                         <Ionicons name="happy-outline" size={26} color="#22C55E" />
@@ -154,9 +230,12 @@ export default function ScannerScreen() {
                         <Text style={styles.resultData}>
                             Tu mascota estaba <Text style={{ fontWeight: 'bold' }}>{lastAnalysis.emocion} · {lastAnalysis.confianza}%</Text>
                         </Text>
+                        {lastAnalysis.mensajeGemini && (
+                            <Text style={styles.resultSubtext}>✅ Verificado: {lastAnalysis.mensajeGemini}</Text>
+                        )}
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                </                View>
+                    <Ionicons name="checkmark-circle" size={24} color="#22C55E" />
+                </View>
             )}
         </View>
     );
@@ -184,8 +263,46 @@ const styles = StyleSheet.create({
     fullImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     emptyState: { alignItems: 'center', paddingHorizontal: 40 },
     emptyText: { textAlign: 'center', color: '#627D98', fontSize: 15, marginTop: 12, lineHeight: 22 },
-    loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(240,244,248,0.85)', justifyContent: 'center', alignItems: 'center' },
+    loadingOverlay: { 
+        ...StyleSheet.absoluteFillObject, 
+        backgroundColor: 'rgba(240,244,248,0.85)', 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+    },
     loadingText: { marginTop: 10, color: '#102A43', fontWeight: '600' },
+    errorOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(254, 242, 242, 0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+    },
+    errorOverlayText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#DC2626',
+        marginTop: 12,
+        textAlign: 'center'
+    },
+    errorOverlaySubtext: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginTop: 8,
+        textAlign: 'center',
+        paddingHorizontal: 20
+    },
+    resetButton: {
+        marginTop: 20,
+        backgroundColor: '#DC2626',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 12
+    },
+    resetButtonText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 16
+    },
     btnPrimary: {
         flexDirection: 'row',
         backgroundColor: '#244B5A',
@@ -213,6 +330,18 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     btnSecondaryText: { color: '#244B5A', fontSize: 16, fontWeight: '600' },
+    btnReset: {
+        flexDirection: 'row',
+        backgroundColor: '#EF4444',
+        width: '100%',
+        paddingVertical: 14,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 12
+    },
+    btnResetText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
     resultCard: {
         flexDirection: 'row',
         backgroundColor: '#FFF',
@@ -226,5 +355,6 @@ const styles = StyleSheet.create({
     iconBadge: { width: 44, height: 44, backgroundColor: '#DCFCE7', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
     resultTextContainer: { flex: 1, marginLeft: 14 },
     resultLabel: { fontSize: 12, color: '#627D98', marginBottom: 2 },
-    resultData: { fontSize: 15, color: '#102A43' }
+    resultData: { fontSize: 15, color: '#102A43' },
+    resultSubtext: { fontSize: 12, color: '#22C55E', marginTop: 4 }
 });
