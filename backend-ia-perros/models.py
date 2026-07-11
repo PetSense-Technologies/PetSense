@@ -26,6 +26,7 @@ class Mascota(Base):
     racha_actual = Column(Integer, default=0)
     ultima_racha_update = Column(Date)
     fecha_registro = Column(DateTime, default=datetime.datetime.utcnow)
+    embedding_identidad = Column(String, nullable=True)
     
     dueno = relationship("Dueno", back_populates="mascotas")
     escaneos = relationship("HistorialEscaneo", back_populates="mascota")
