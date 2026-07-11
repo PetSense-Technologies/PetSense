@@ -22,6 +22,9 @@ El núcleo inteligente de PetSense es una Red Neuronal Convolucional (CNN) optim
        [ INFERENCIA SOFTMAX ] -> Probabilidades de las 5 Emociones
 
 
+## Comando para saber el database.py
+python analisis_modelo.py --- dentro del backend
+
 1. Preparación del Dataset y Preprocesamiento
 
 Aumento de Datos (Data Augmentation): Para prevenir el sobreajuste (overfitting) provocado por las variaciones lumínicas y diferencias morfológicas entre razas (ej. perros braquicéfalos frente a hocicos alargados), se aplicó un pipeline de distorsión controlada en memoria:
