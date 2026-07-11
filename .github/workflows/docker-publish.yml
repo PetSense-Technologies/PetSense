@@ -39,7 +39,6 @@ jobs:
           # Genera dos tags: uno con la etiqueta 'latest' y otro único con el SHA del commit
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/petsense-backend-ia:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/petsense-backend-ia:${{ github.sha }}
           # Utiliza caché de GitHub Actions para acelerar las compilaciones subsiguientes
           cache-from: type=gha
           cache-to: type=gha,mode=max
