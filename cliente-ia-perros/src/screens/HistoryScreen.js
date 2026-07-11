@@ -122,7 +122,7 @@ export default function HistoryScreen() {
             {historial.length === 0 ? (
                 <View style={styles.emptyCard}>
                     <Ionicons name="images-outline" size={48} color="#94A3B8" />
-                    <Text style={styles.emptyText}>Aún no has realizado escaneos con esta mascota.</Text>
+                    <Text style={styles.emptyText}>Aún no has realizado escaneos con esta perrito.</Text>
                 </View>
             ) : (
                 historial.map((item, index) => {
