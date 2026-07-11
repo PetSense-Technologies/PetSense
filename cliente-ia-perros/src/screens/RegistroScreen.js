@@ -7,7 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-const API_BASE_URL = 'http://192.168.18.3:8000';
+//const API_BASE_URL = 'http://192.168.18.3:8000'; //Mi red WIFI
+const API_BASE_URL = 'http://172.20.10.5:8000'; //Mi red WIFI
+
 
 export default function RegistroScreen({ navigation }) {
     const [nombreDueno, setNombreDueno] = useState('');
@@ -27,7 +29,21 @@ export default function RegistroScreen({ navigation }) {
         try {
             setLoading(true);
 
+<<<<<<< HEAD
             const response = await fetch(`${API_BASE_URL}/mascotas/registro`, {
+=======
+            const params = new URLSearchParams({
+                nombre_dueno: nombreDueno,
+                celular: celular,
+                direccion: direccion || '',
+                nombre_mascota: nombreMascota,
+                raza: raza || 'Mestizo',
+                edad_meses: edadMeses ? parseInt(edadMeses).toString() : '0'
+            });
+
+            // Petición POST
+            const response = await fetch(`${API_BASE_URL}/mascotas/registro?${params.toString()}`, {
+>>>>>>> 831da4e41b4c501ac26602c0f67a26121014648a
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,6 +69,18 @@ export default function RegistroScreen({ navigation }) {
             } else {
                 throw new Error(data.message || "Error al registrar");
             }
+<<<<<<< HEAD
+=======
+
+            // Se guarda el ID en la memoria del teléfono para el Escáner e Historial
+            await AsyncStorage.setItem('mascota_id_real', String(mascotaIdGenerado));
+
+            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente`);
+
+            // Avanzamos al Menu Principal para romper el estancamiento de forma fluida
+            navigation.navigate('MenuPrincipal');
+
+>>>>>>> 831da4e41b4c501ac26602c0f67a26121014648a
         } catch (error) {
             console.error("Error completo:", error);
             Alert.alert('Error', error.message || 'No se pudo conectar con el servidor.');
@@ -64,71 +92,146 @@ export default function RegistroScreen({ navigation }) {
     return (
         <View style={styles.outerContainer}>
             <StatusBar barStyle="light-content" backgroundColor="#132F35" />
+
+            {/* Header corporativo estilo image_7016c5.png */}
             <View style={styles.header}>
-                <View style={styles.headerBadge}><Ionicons name="paw" size={18} color="#FFF" /></View>
+                <View style={styles.headerBadge}>
+                    <Ionicons name="paw" size={18} color="#FFF" />
+                </View>
                 <View style={styles.headerTextContainer}>
                     <Text style={styles.headerTitle}>Crear cuenta</Text>
                     <Text style={styles.headerSubtitle}>Empieza a entender a tu perrito hoy</Text>
                 </View>
             </View>
 
+            {/* Scroll de los formularios */}
             <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+
+                {/* CARD 1: INFORMACIÓN DEL DUEÑO */}
                 <View style={styles.card}>
                     <View style={styles.ownerCardHeader}>
                         <Ionicons name="person-outline" size={16} color="#1E3E47" style={styles.sectionIcon} />
                         <Text style={styles.ownerHeaderText}>INFORMACIÓN DEL DUEÑO</Text>
                     </View>
+
                     <View style={styles.cardBody}>
+                        {/* Campo Nombre Completo */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="person-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Nombre completo *" placeholderTextColor="#9BAEAF" value={nombreDueno} onChangeText={setNombreDueno} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nombre completo *"
+                                placeholderTextColor="#9BAEAF"
+                                value={nombreDueno}
+                                onChangeText={setNombreDueno}
+                            />
                         </View>
+
+                        {/* Campo Celular */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="call-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Celular *" placeholderTextColor="#9BAEAF" keyboardType="phone-pad" value={celular} onChangeText={setCelular} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Celular *"
+                                placeholderTextColor="#9BAEAF"
+                                keyboardType="phone-pad"
+                                value={celular}
+                                onChangeText={setCelular}
+                            />
                         </View>
+
+                        {/* Campo Dirección */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="location-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Dirección" placeholderTextColor="#9BAEAF" value={direccion} onChangeText={setDireccion} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Dirección"
+                                placeholderTextColor="#9BAEAF"
+                                value={direccion}
+                                onChangeText={setDireccion}
+                            />
                         </View>
                     </View>
                 </View>
 
+                {/* CARD 2: INFORMACIÓN DE TU MASCOTA */}
                 <View style={styles.card}>
                     <View style={styles.petCardHeader}>
                         <Ionicons name="paw-outline" size={16} color="#FF6D3F" style={styles.sectionIcon} />
                         <Text style={styles.petHeaderText}>INFORMACIÓN DE TU MASCOTA</Text>
                     </View>
+
                     <View style={styles.cardBody}>
+                        {/* Campo Nombre del Perrito */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="paw-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Nombre del perrito *" placeholderTextColor="#9BAEAF" value={nombreMascota} onChangeText={setNombreMascota} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nombre del perrito *"
+                                placeholderTextColor="#9BAEAF"
+                                value={nombreMascota}
+                                onChangeText={setNombreMascota}
+                            />
                         </View>
+
+                        {/* Campo Raza */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="sparkles-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Raza" placeholderTextColor="#9BAEAF" value={raza} onChangeText={setRaza} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Raza"
+                                placeholderTextColor="#9BAEAF"
+                                value={raza}
+                                onChangeText={setRaza}
+                            />
                         </View>
+
+                        {/* Campo Edad */}
                         <View style={styles.inputWrapper}>
                             <Ionicons name="calendar-outline" size={18} color="#6B8086" style={styles.inputIcon} />
-                            <TextInput style={styles.input} placeholder="Edad en meses" placeholderTextColor="#9BAEAF" keyboardType="numeric" value={edadMeses} onChangeText={setEdadMeses} />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Edad en meses"
+                                placeholderTextColor="#9BAEAF"
+                                keyboardType="numeric"
+                                value={edadMeses}
+                                onChangeText={setEdadMeses}
+                            />
                         </View>
                     </View>
                 </View>
 
+<<<<<<< HEAD
                 <TouchableOpacity style={styles.actionButton} onPress={ejecutarRegistroReal} disabled={loading} activeOpacity={0.9}>
                     {loading ? <ActivityIndicator color="#FFF" /> : (
+=======
+                {/* Leyenda de campos obligatorios */}
+                <Text style={styles.legendText}>* Campos requeridos</Text>
+
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={ejecutarRegistroReal}
+                    disabled={loading}
+                    activeOpacity={0.9}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#FFF" />
+                    ) : (
+>>>>>>> 831da4e41b4c501ac26602c0f67a26121014648a
                         <>
                             <Text style={styles.buttonText}>Continuar al Escáner</Text>
-                            <Ionicons name="arrow-forward" size={18} color="#FFF" />
+                            <Ionicons name="arrow-forward" size={18} color="#FFF" style={styles.arrowIcon} />
                         </>
                     )}
                 </TouchableOpacity>
+
             </ScrollView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
     outerContainer: { flex: 1, backgroundColor: '#F3F6F8' },
     header: { backgroundColor: '#132F35', flexDirection: 'row', alignItems: 'center', paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20 },
     headerBadge: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255, 255, 255, 0.15)', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
@@ -148,4 +251,142 @@ const styles = StyleSheet.create({
     input: { flex: 1, color: '#132F35', fontSize: 14, fontWeight: '500' },
     actionButton: { flexDirection: 'row', backgroundColor: '#1E3E47', width: width - 32, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
     buttonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold', marginRight: 8 }
+=======
+    outerContainer: {
+        flex: 1,
+        backgroundColor: '#F3F6F8',
+    },
+    header: {
+        backgroundColor: '#132F35',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingTop: 50,
+        paddingBottom: 20,
+        paddingHorizontal: 20,
+    },
+    headerBadge: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    headerTextContainer: {
+        flex: 1,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#FFF',
+    },
+    headerSubtitle: {
+        fontSize: 13,
+        color: '#A0B4B7',
+        marginTop: 2,
+    },
+    scrollContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        paddingBottom: 40,
+        alignItems: 'center',
+    },
+    card: {
+        backgroundColor: '#FFF',
+        width: '100%',
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: '#E6ECEF',
+        marginBottom: 20,
+        overflow: 'hidden',
+        elevation: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+    },
+    ownerCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#ECF2F4',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+    },
+    ownerHeaderText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#132F35',
+        letterSpacing: 0.8,
+    },
+    petCardHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F6ECE8',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+    },
+    petHeaderText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#FF6D3F',
+        letterSpacing: 0.8,
+    },
+    sectionIcon: {
+        marginRight: 8,
+    },
+    cardBody: {
+        paddingHorizontal: 16,
+        paddingVertical: 18,
+        gap: 12,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#EDF1F3',
+        borderWidth: 1.5,
+        borderColor: '#DFE5E8',
+        borderRadius: 12,
+        height: 48,
+        paddingHorizontal: 12,
+    },
+    inputIcon: {
+        marginRight: 10,
+    },
+    input: {
+        flex: 1,
+        color: '#132F35',
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    legendText: {
+        fontSize: 12,
+        color: '#899E9F',
+        alignSelf: 'center',
+        marginBottom: 25,
+    },
+    actionButton: {
+        flexDirection: 'row',
+        backgroundColor: '#1E3E47',
+        width: width - 32,
+        height: 52,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#1E3E47',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5,
+        elevation: 3,
+    },
+    buttonText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: 'bold',
+        marginRight: 8,
+    },
+    arrowIcon: {
+        marginTop: 1,
+    }
+>>>>>>> 831da4e41b4c501ac26602c0f67a26121014648a
 });
