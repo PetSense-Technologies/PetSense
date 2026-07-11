@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 load_dotenv()
 
-# Conexión a supabase
+# Conexión a supabase :v
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL is None:
