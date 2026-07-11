@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import {
-    StyleSheet,
-    Text,
-    View,
-    TextInput,
-    TouchableOpacity,
-    ScrollView,
-    StatusBar,
-    Dimensions,
-    Alert,
-    ActivityIndicator
+    StyleSheet, Text, View, TextInput, TouchableOpacity,
+    ScrollView, StatusBar, Dimensions, Alert, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,42 +27,35 @@ export default function RegistroScreen({ navigation }) {
         try {
             setLoading(true);
 
-            const params = new URLSearchParams({
-                nombre_dueno: nombreDueno,
-                celular: celular,
-                direccion: direccion || '',
-                nombre_mascota: nombreMascota,
-                raza: raza || 'Mestizo',
-                edad_meses: edadMeses ? parseInt(edadMeses).toString() : '0'
-            });
-
-            const response = await fetch(`${API_BASE_URL}/mascotas/registro?${params.toString()}`, {
+            const response = await fetch(`${API_BASE_URL}/mascotas/registro`, {
                 method: 'POST',
-                headers: { 'Accept': 'application/json' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    nombre_dueno: nombreDueno,
+                    celular: celular,
+                    direccion: direccion || '',
+                    nombre_mascota: nombreMascota,
+                    raza: raza || 'Mestizo',
+                    edad_meses: parseInt(edadMeses) || 0
+                })
             });
-
-            if (!response.ok) {
-                throw new Error(`Error en el servidor: Código ${response.status}`);
-            }
 
             const data = await response.json();
-            const mascotaIdGenerado = data.mascota_id;
+            console.log("Respuesta del servidor:", data);
 
-            if (!mascotaIdGenerado) {
-                throw new Error("El servidor no devolvió un ID de mascota válido.");
+            if (data.status === 'success') {
+                await AsyncStorage.setItem('mascota_id_real', String(data.mascota_id));
+                Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente`);
+                navigation.navigate('RegistroBiometrico', { mascotaId: data.mascota_id });
+            } else {
+                throw new Error(data.message || "Error al registrar");
             }
-
-            // Guardado persistente para ProfileScreen
-            await AsyncStorage.setItem('mascota_id_real', String(mascotaIdGenerado));
-            await AsyncStorage.setItem('mascota_nombre', nombreMascota);
-            await AsyncStorage.setItem('mascota_raza', raza || 'Mestizo');
-            await AsyncStorage.setItem('mascota_edad', edadMeses ? Math.round(parseInt(edadMeses) / 12).toString() : '0');
-
-            Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente`);
-            navigation.navigate('MenuPrincipal');
-
         } catch (error) {
-            Alert.alert('Error en registro', error.message || 'No se pudo conectar con el servidor.');
+            console.error("Error completo:", error);
+            Alert.alert('Error', error.message || 'No se pudo conectar con el servidor.');
         } finally {
             setLoading(false);
         }
@@ -83,7 +68,7 @@ export default function RegistroScreen({ navigation }) {
                 <View style={styles.headerBadge}><Ionicons name="paw" size={18} color="#FFF" /></View>
                 <View style={styles.headerTextContainer}>
                     <Text style={styles.headerTitle}>Crear cuenta</Text>
-                    <Text style={styles.headerSubtitle}>Empieza a entender a tu mascota hoy</Text>
+                    <Text style={styles.headerSubtitle}>Empieza a entender a tu perrito hoy</Text>
                 </View>
             </View>
 
@@ -130,8 +115,6 @@ export default function RegistroScreen({ navigation }) {
                     </View>
                 </View>
 
-                <Text style={styles.legendText}>* Campos requeridos</Text>
-
                 <TouchableOpacity style={styles.actionButton} onPress={ejecutarRegistroReal} disabled={loading} activeOpacity={0.9}>
                     {loading ? <ActivityIndicator color="#FFF" /> : (
                         <>
@@ -163,7 +146,6 @@ const styles = StyleSheet.create({
     inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDF1F3', borderWidth: 1.5, borderColor: '#DFE5E8', borderRadius: 12, height: 48, paddingHorizontal: 12 },
     inputIcon: { marginRight: 10 },
     input: { flex: 1, color: '#132F35', fontSize: 14, fontWeight: '500' },
-    legendText: { fontSize: 12, color: '#899E9F', alignSelf: 'center', marginBottom: 25 },
     actionButton: { flexDirection: 'row', backgroundColor: '#1E3E47', width: width - 32, height: 52, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
     buttonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold', marginRight: 8 }
 });
