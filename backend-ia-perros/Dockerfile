@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -7,8 +7,13 @@ WORKDIR /app
 
 # Instala dependencias del sistema necesarias para opencv y ultralytics
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 \
     libglib2.0-0 \
+    libgl1 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libxcb1 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia los archivos de requerimientos e instala las dependencias de Python
