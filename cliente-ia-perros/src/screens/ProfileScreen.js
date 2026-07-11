@@ -1,15 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
 export default function ProfileScreen() {
-    const [petData, setPetData] = useState({ nombre: 'Max', raza: 'Golden', edad: '3', estado: 'Feliz' });
-    const [stats, setStats] = useState({ totalEscaneos: '12', racha: 0 }); // Racha inicial 0
+    const [loading, setLoading] = useState(true);
+    const [petData, setPetData] = useState({ nombre: '...', raza: '...', edad: '...', estado: '...' });
+    const [stats, setStats] = useState({ totalEscaneos: '0', racha: 0 });
     const [recompensas, setRecompensas] = useState([]);
 
-    // Recompensas para la Demo
     const listaPremios = [
         { id: 1, rachaReq: 50, titulo: '10% Supermaxi', desc: 'Descuento en comida para mascotas', codigo: 'MAXI-PET-10' },
         { id: 2, rachaReq: 100, titulo: '20% Veterinaria Pedro', desc: 'Descuento en corte de pelaje', codigo: 'PEDRO-CUT-20' },
@@ -22,52 +22,55 @@ export default function ProfileScreen() {
     const simularRacha = () => {
         let nuevaRacha = stats.racha + 50;
         if (nuevaRacha > 500) nuevaRacha = 0;
-
         setStats(prev => ({ ...prev, racha: nuevaRacha }));
-
         const ganadas = listaPremios.filter(p => nuevaRacha >= p.rachaReq);
         setRecompensas(ganadas);
+        if (nuevaRacha > 0) Alert.alert("Felicidades!!", `Haz alcanzado ${nuevaRacha} días de racha, te espera un premio.`);
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            const loadData = async () => {
-                const nombre = await AsyncStorage.getItem('mascota_nombre');
-                const raza = await AsyncStorage.getItem('mascota_raza');
-                const edad = await AsyncStorage.getItem('mascota_edad');
-                const estado = await AsyncStorage.getItem('ultimo_estado_detectado');
-                const historialRaw = await AsyncStorage.getItem('historial_escaneos');
-                const lista = historialRaw ? JSON.parse(historialRaw) : [];
-
+    const loadProfile = async () => {
+        try {
+            const id = await AsyncStorage.getItem('mascota_id_real');
+            if (!id) return;
+            const response = await fetch(`http://192.168.18.3:8000/mascotas/${id}/perfil`);
+            const data = await response.json();
+            if (data.status === 'success') {
                 setPetData({
-                    nombre: nombre || 'Max',
-                    raza: raza || 'Golden',
-                    edad: edad || '3',
-                    estado: estado || 'Feliz'
+                    nombre: data.nombre,
+                    raza: data.raza,
+                    edad: data.edad.toString(),
+                    estado: data.ultima_emocion
                 });
+                setStats({ totalEscaneos: data.total_escaneos.toString(), racha: data.racha_actual });
+            }
+        } catch (error) {
+            console.error("Error al cargar perfil:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-                setStats(prev => ({ ...prev, totalEscaneos: lista.length.toString() }));
-            };
-            loadData();
-        }, [])
-    );
+    useFocusEffect(useCallback(() => { loadProfile(); }, []));
+
+    if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#FF6D3F" /></View>;
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <Text style={styles.sectionTitle}>
-                <Ionicons name="paw" size={24} color="#FF6D3F" />
-                <Ionicons name="paw" size={18} color="#FF6D3F" style={{ opacity: 0.6 }} />
-                {" "}Perfil
-            </Text>
+            <Text style={styles.sectionTitle}>Perfil</Text>
 
+            {/* Perfil Real */}
             <View style={styles.profileCard}>
                 <View style={styles.petInfoRow}>
                     <View style={styles.avatarContainer}>
                         <Ionicons name="paw" size={34} color="#BACCD6" />
                     </View>
+
                     <View style={styles.petTextContainer}>
                         <Text style={styles.petName}>{petData.nombre}</Text>
-                        <Text style={styles.petDetails}>{petData.raza} · {petData.edad} años</Text>
+                        <Text style={styles.petDetails}>
+                            {petData.raza} · {petData.edad} meses
+                        </Text>
+
                         <View style={styles.statusBadge}>
                             <Ionicons name="happy" size={14} color="#15803D" />
                             <Text style={styles.statusText}>{petData.estado}</Text>
@@ -81,16 +84,32 @@ export default function ProfileScreen() {
                         <Text style={styles.statLabel}>Escaneos</Text>
                     </View>
 
-                    {/* BOTÓN DEMO */}
-                    <TouchableOpacity style={styles.statBox} onPress={simularRacha}>
-                        <Text style={[styles.statValue, { color: stats.racha > 0 ? '#FFD700' : '#FFF' }]}>
+                    <TouchableOpacity
+                        style={styles.statBox}
+                        onPress={simularRacha}
+                        activeOpacity={0.8}
+                    >
+                        <Text
+                            style={[
+                                styles.statValue,
+                                { color: stats.racha > 0 ? "#FFD700" : "#FFF" }
+                            ]}
+                        >
                             {stats.racha}d
                         </Text>
-                        <Text style={[styles.statLabel, { color: stats.racha > 0 ? '#FFD700' : '#BACCD6' }]}>Racha 🔥</Text>
+
+                        <Text
+                            style={[
+                                styles.statLabel,
+                                { color: stats.racha > 0 ? "#FFD700" : "#BACCD6" }
+                            ]}
+                        >
+                            Racha 🔥
+                        </Text>
                     </TouchableOpacity>
 
                     <View style={styles.statBox}>
-                        <Text style={styles.statValue}>86%</Text>
+                        <Text style={styles.statValue}>95%</Text>
                         <Text style={styles.statLabel}>Humor</Text>
                     </View>
                 </View>
@@ -99,33 +118,39 @@ export default function ProfileScreen() {
             {/* SECCIÓN DE RECOMPENSAS */}
             <View style={styles.card}>
                 <Text style={styles.cardTitle}>Mis Recompensas</Text>
-                {recompensas.length > 0 ? recompensas.map((premio) => (
-                    <View key={premio.id} style={styles.couponRow}>
-                        <View style={styles.couponIcon}>
-                            <Ionicons name="gift" size={24} color="#FF6D3F" />
+
+                {recompensas.length > 0 ? (
+                    recompensas.map((premio) => (
+                        <View key={premio.id} style={styles.couponRow}>
+                            <View style={styles.couponIcon}>
+                                <Ionicons name="gift" size={24} color="#FF6D3F" />
+                            </View>
+
+                            <View style={styles.couponContent}>
+                                <Text style={styles.couponTitle}>{premio.titulo}</Text>
+                                <Text style={styles.couponDesc}>{premio.desc}</Text>
+                                <Text style={styles.couponCode}>
+                                    CÓDIGO: {premio.codigo}
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.couponContent}>
-                            <Text style={styles.couponTitle}>{premio.titulo}</Text>
-                            <Text style={styles.couponDesc}>{premio.desc}</Text>
-                            <Text style={styles.couponCode}>CÓDIGO: {premio.codigo}</Text>
-                        </View>
-                    </View>
-                )) : (
+                    ))
+                ) : (
                     <View style={styles.emptyRewards}>
-                        <Ionicons name="lock-closed-outline" size={30} color="#9FB3C8" />
+                        <Ionicons
+                            name="lock-closed-outline"
+                            size={30}
+                            color="#9FB3C8"
+                        />
                         <Text style={styles.emptyRewardsText}>
-                            Mantén tu racha para desbloquear premios en Supermaxi y más.
+                            Mantén tu racha para desbloquear premios.
                         </Text>
                     </View>
                 )}
             </View>
 
-            <TouchableOpacity style={styles.btnDashed}>
-                <Ionicons name="add" size={20} color="#244B5A" />
-                <Text style={styles.btnDashedText}>Agregar otra mascota</Text>
-            </TouchableOpacity>
-
             <View style={{ height: 100 }} />
+
         </ScrollView>
     );
 }
