@@ -14,6 +14,7 @@ import ScanerScreen from './src/screens/ScannerScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import RegistroBiometrico from './src/screens/RegistroBiometrico';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -88,6 +89,7 @@ export default function AppNavigator() {
       <Stack.Navigator initialRouteName="Bienvenida" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Bienvenida" component={WelcomeScreen} />
         <Stack.Screen name="Registro" component={RegistroScreen} />
+        <Stack.Screen name="RegistroBiometrico" component={RegistroBiometrico} />
         <Stack.Screen name="MenuPrincipal" component={MainTabs} />
       </Stack.Navigator>
     </NavigationContainer>
