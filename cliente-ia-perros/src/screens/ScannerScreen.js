@@ -15,49 +15,33 @@ export default function ScannerScreen() {
     // Aquí se procesa y envía la imagen al Backend FastAPI
     const uploadImage = async (uri) => {
         setLoading(true);
-
         try {
-            // 1. Se lee el ID guardado en el registro inicial
             const idGuardado = await AsyncStorage.getItem('mascota_id_real');
-            const idMascota = idGuardado ? idGuardado : '1';
-
-            console.log(`Enviando imagen para la mascota ID aislada: ${idMascota}`);
-
-            // 2. Metemos tanto el archivo como el ID dentro de FormData
             let formData = new FormData();
-            formData.append('file', {
-                uri: uri,
-                name: 'photo.jpg',
-                type: 'image/jpeg',
-            });
-            formData.append('mascota_id', idMascota);
+            formData.append('file', { uri, name: 'photo.jpg', type: 'image/jpeg' });
+            formData.append('mascota_id', idGuardado);
 
-            // 3. Hacemos la petición limpia a /predict sin parámetros quemados en la URL
-            const response = await fetch(BACKEND_URL, {
+            const response = await fetch("http://192.168.18.3:8000/predict", {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
 
             const data = await response.json();
+            console.log("Respuesta del servidor:", data);
 
             if (data.status === 'success') {
-                const ahora = new Date();
-                const horaFormateada = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
                 setLastAnalysis({
-                    hora: `Hoy ${horaFormateada}`,
+                    hora: "Ahora",
                     emocion: data.emotion,
                     confianza: data.confidence
                 });
             } else {
-                alert("Error de análisis: " + data.message);
+                alert("Error del servidor: " + (data.message || "Sin mensaje"));
             }
         } catch (error) {
-            console.error(error);
-            alert("No se pudo conectar con el servidor IA");
+            console.error("Error en el catch:", error);
+            alert("No se pudo conectar al servidor. Revisa tu red.");
         } finally {
             setLoading(false);
         }
@@ -110,7 +94,7 @@ export default function ScannerScreen() {
             <View style={styles.header}>
 
                 <Text style={styles.brand}><Ionicons name="paw" size={20} color="#FF6D3F" /> PetSense</Text>
-                <Text style={styles.tagline}>Analizador de Emociones de tu mascota</Text>
+                <Text style={styles.tagline}>Analizador de Emociones de tu perrito</Text>
             </View>
 
             {/* Contenedor de Previsualización Detección */}
@@ -120,7 +104,7 @@ export default function ScannerScreen() {
                 ) : (
                     <View style={styles.emptyState}>
                         <Ionicons name="camera-outline" size={50} color="#7F8E9C" />
-                        <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu mascota</Text>
+                        <Text style={styles.emptyText}>Toma una foto o sube una imagen de tu perrito</Text>
                     </View>
                 )}
                 {loading && (
@@ -156,7 +140,7 @@ export default function ScannerScreen() {
                         </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                </                View>
+                </View>
             )}
         </View>
     );
