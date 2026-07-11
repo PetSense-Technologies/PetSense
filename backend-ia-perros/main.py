@@ -1,4 +1,3 @@
-# librerias
 import os
 import cv2
 import numpy as np
@@ -46,6 +45,8 @@ async def predict_emotion(
     mascota_id_query: int = Query(None, alias="mascota_id"), 
     db: Session = Depends(database.get_db)
 ):
+    print("Entró al endpoint")
+    print(file.filename)
     try:
         id_final = mascota_id_query if mascota_id_query is not None else mascota_id
 
