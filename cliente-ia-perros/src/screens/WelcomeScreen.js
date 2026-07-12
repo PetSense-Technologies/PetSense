@@ -27,7 +27,7 @@ export default function WelcomeScreen({ navigation }) {
         // Verificar estado de registro en segundo plano
         const checkStatus = async () => {
             const id = await AsyncStorage.getItem('mascota_id_real');
-            setIsRegistered(!!id); // true si existe id, false si no
+            setIsRegistered(!!id);
         };
         checkStatus();
 

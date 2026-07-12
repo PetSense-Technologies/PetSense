@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, File, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from datetime import date, timedelta, datetime
 from sklearn.metrics.pairwise import cosine_similarity
 from collections import defaultdict
@@ -83,7 +83,7 @@ async def predict_emotion(file: UploadFile = File(...), mascota_id: int = Form(.
         vector_registrado = np.array(json.loads(db_mascota.embedding_identidad)).reshape(1, -1)
         similitud = cosine_similarity(vector_actual, vector_registrado)[0][0]
         
-        if similitud < 0.00:  # esto es para asemejar la similud en las emociones de los animales
+        if similitud < 0.80:  # esto es para asemejar la similud en las emociones de los animales
             return {"status": "error", "message": "Acceso denegado: Esta no es la mascota registrada."}
 
         # 2. Predicción de Emoción
@@ -173,3 +173,20 @@ def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get
         return {"status": "success", "distribucion": {k.capitalize(): v for k, v in emociones_base.items()}}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+    
+@app.get("/db-test")
+def test_db_connection(db: Session = Depends(database.get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        # Obtener el host sin credenciales de forma segura
+        host_seguro = database.DATABASE_URL.split('@')[-1] if database.DATABASE_URL and '@' in database.DATABASE_URL else "No configurada"
+        return {
+            "status": "success",
+            "message": "Conexión a la base de datos exitosa",
+            "host": host_seguro
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error al conectar con la base de datos: {str(e)}"
+        }

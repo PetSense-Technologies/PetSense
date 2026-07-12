@@ -6,6 +6,7 @@ load_dotenv()
 
 # Conexión a supabase
 DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL = "postgresql://postgres.uesljuzqnglczkhviggw:Tengouncuernodemamut1506@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
 
 if DATABASE_URL is None:
     raise ValueError("La variable DATABASE_URL no está definida.")
