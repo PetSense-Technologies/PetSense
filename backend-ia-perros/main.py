@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 import database
 import models
 from datetime import date, timedelta, datetime
-from sqlalchemy import func
+from sqlalchemy import func, text
 import pytz
 
 models.Base.metadata.create_all(bind=database.engine)
@@ -37,6 +37,23 @@ print("¡Modelos listos para recibir peticiones!")
 @app.get("/")
 def inicio():
     return {"status": "online", "message": "API de Emociones Caninas activa"}
+
+@app.get("/db-test")
+def test_db_connection(db: Session = Depends(database.get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        # Obtener el host sin credenciales de forma segura
+        host_seguro = database.DATABASE_URL.split('@')[-1] if database.DATABASE_URL and '@' in database.DATABASE_URL else "No configurada"
+        return {
+            "status": "success",
+            "message": "Conexión a la base de datos exitosa",
+            "host": host_seguro
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error al conectar con la base de datos: {str(e)}"
+        }
 
 @app.post("/predict")
 async def predict_emotion(
