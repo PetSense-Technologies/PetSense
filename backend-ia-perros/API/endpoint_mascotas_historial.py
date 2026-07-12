@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from DATABASE import database
-from MODELS import models
+from DATABASE.database import get_db
+from MODELS.historial_escaneo import HistorialEscaneo
 
 router = APIRouter()
 
 @router.get("/mascotas/{mascota_id}/historial")
-def obtener_historial_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
+def obtener_historial_mascota(mascota_id: int, db: Session = Depends(get_db)):
     try:
-        registros = db.query(models.HistorialEscaneo).filter(
-            models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.fecha_hora.desc()).all()
+        registros = db.query(HistorialEscaneo).filter(
+            HistorialEscaneo.mascota_id == mascota_id
+        ).order_by(HistorialEscaneo.fecha_hora.desc()).all()
 
         resultado = []
         for r in registros:

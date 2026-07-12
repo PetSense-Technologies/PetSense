@@ -4,8 +4,9 @@ import pytz
 from fastapi import APIRouter, UploadFile, File, Depends, Form, Query
 from sqlalchemy.orm import Session
 from datetime import date, timedelta, datetime
-from DATABASE import database
-from MODELS import models
+from DATABASE.database import get_db
+from MODELS.mascota import Mascota
+from MODELS.historial_escaneo import HistorialEscaneo
 
 router = APIRouter()
 
@@ -26,7 +27,7 @@ async def predict_emotion(
     file: UploadFile = File(...),
     mascota_id: int = Form(None),
     mascota_id_query: int = Query(None, alias="mascota_id"),
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(get_db)
 ):
     print("Entró al endpoint")
     print(file.filename)
@@ -83,7 +84,7 @@ async def predict_emotion(
 
         # PERSISTENCIA EN BASE DE DATOS Y RACHAS
         if id_final:
-            db_mascota = db.query(models.Mascota).filter(models.Mascota.id == id_final).first()
+            db_mascota = db.query(Mascota).filter(Mascota.id == id_final).first()
             if db_mascota:
                 hoy = date.today()
 
@@ -103,7 +104,7 @@ async def predict_emotion(
 
                 emocion_formateada = nombre_emocion.strip().capitalize()
 
-                nuevo_escaneo = models.HistorialEscaneo(
+                nuevo_escaneo = HistorialEscaneo(
                     mascota_id=id_final,
                     emocion=emocion_formateada,
                     confianza=round(confianza, 2),

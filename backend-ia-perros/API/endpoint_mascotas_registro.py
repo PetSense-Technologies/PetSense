@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from DATABASE import database
-from MODELS import models
+from DATABASE.database import get_db
+from MODELS.dueno import Dueno
+from MODELS.mascota import Mascota
 
 router = APIRouter()
 
@@ -9,14 +10,14 @@ router = APIRouter()
 def registrar_mascota_completa(
     nombre_dueno: str, celular: str, direccion: str,
     nombre_mascota: str, raza: str, edad_meses: int,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(get_db)
 ):
     try:
-        nuevo_dueno = models.Dueno(nombre_dueno=nombre_dueno, celular=celular, direccion=direccion)
+        nuevo_dueno = Dueno(nombre_dueno=nombre_dueno, celular=celular, direccion=direccion)
         db.add(nuevo_dueno)
         db.flush()
 
-        nueva_mascota = models.Mascota(
+        nueva_mascota = Mascota(
             dueno_id=nuevo_dueno.id,
             nombre_mascota=nombre_mascota,
             raza=raza,

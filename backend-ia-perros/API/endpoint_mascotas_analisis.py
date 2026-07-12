@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
-from DATABASE import database
-from MODELS import models
+from DATABASE.database import get_db
+from MODELS.historial_escaneo import HistorialEscaneo
 
 router = APIRouter()
 
 @router.get("/mascotas/{mascota_id}/analisis")
-def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
+def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(get_db)):
     try:
         conteos_raw = db.query(
-            models.HistorialEscaneo.emocion, func.count(models.HistorialEscaneo.id)
-        ).filter(models.HistorialEscaneo.mascota_id == mascota_id).group_by(models.HistorialEscaneo.emocion).all()
+            HistorialEscaneo.emocion, func.count(HistorialEscaneo.id)
+        ).filter(HistorialEscaneo.mascota_id == mascota_id).group_by(HistorialEscaneo.emocion).all()
 
         emociones_base = {"FELIZ": 0, "EMOCIONADO": 0, "TRANQUILO": 0, "TRISTE": 0, "ANSIOSO": 0}
         for emocion, conteo in conteos_raw:
@@ -29,9 +29,9 @@ def obtener_analisis_mascota(mascota_id: int, db: Session = Depends(database.get
         for i in range(6, -1, -1):
             dia_evaluado = hoy - timedelta(days=i)
 
-            conteo_dia = db.query(models.HistorialEscaneo).filter(
-                models.HistorialEscaneo.mascota_id == mascota_id,
-                func.date(models.HistorialEscaneo.fecha_hora) == dia_evaluado
+            conteo_dia = db.query(HistorialEscaneo).filter(
+                HistorialEscaneo.mascota_id == mascota_id,
+                func.date(HistorialEscaneo.fecha_hora) == dia_evaluado
             ).count()
 
             nombre_dia_eng = dia_evaluado.strftime("%A")

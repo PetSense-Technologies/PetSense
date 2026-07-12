@@ -2,8 +2,11 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
-from DATABASE import database
-from MODELS import models
+
+from DATABASE.database import Base, engine
+from MODELS.dueno import Dueno                       
+from MODELS.mascota import Mascota                     
+from MODELS.historial_escaneo import HistorialEscaneo 
 
 # routers segmentados
 from API import (
@@ -16,7 +19,7 @@ from API import (
 )
 
 # Crear tablas en la base de datos
-models.Base.metadata.create_all(bind=database.engine)
+Base.metadata.create_all(bind=engine)
 
 # Instancia de la aplicación
 app = FastAPI(title="API de Emociones Caninas")

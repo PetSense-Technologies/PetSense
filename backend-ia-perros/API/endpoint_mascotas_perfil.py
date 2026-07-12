@@ -1,24 +1,25 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from DATABASE import database
-from MODELS import models
+from DATABASE.database import get_db
+from MODELS.mascota import Mascota
+from MODELS.historial_escaneo import HistorialEscaneo
 
 router = APIRouter()
 
 @router.get("/mascotas/{mascota_id}/perfil")
-def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(database.get_db)):
+def obtener_perfil_mascota(mascota_id: int, db: Session = Depends(get_db)):
     try:
-        mascota = db.query(models.Mascota).filter(models.Mascota.id == mascota_id).first()
+        mascota = db.query(Mascota).filter(Mascota.id == mascota_id).first()
         if not mascota:
             return {"status": "error", "message": "Mascota no encontrada"}
 
-        total_escaneos = db.query(models.HistorialEscaneo).filter(
-            models.HistorialEscaneo.mascota_id == mascota_id
+        total_escaneos = db.query(HistorialEscaneo).filter(
+            HistorialEscaneo.mascota_id == mascota_id
         ).count()
 
-        ultimo_escaneo = db.query(models.HistorialEscaneo).filter(
-            models.HistorialEscaneo.mascota_id == mascota_id
-        ).order_by(models.HistorialEscaneo.id.desc()).first()
+        ultimo_escaneo = db.query(HistorialEscaneo).filter(
+            HistorialEscaneo.mascota_id == mascota_id
+        ).order_by(HistorialEscaneo.id.desc()).first()
 
         ultima_emocion = ultimo_escaneo.emocion.capitalize() if ultimo_escaneo else "Indefinido"
 
