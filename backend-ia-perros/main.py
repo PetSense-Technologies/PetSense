@@ -16,6 +16,7 @@ from API import (
     endpoint_mascotas_perfil,
     endpoint_mascotas_historial,
     endpoint_mascotas_analisis,
+    endpoint_verificacion_perro
 )
 
 # Crear tablas en la base de datos
@@ -35,14 +36,18 @@ app.add_middleware(
 # Cargar modelos YOLO
 RUTA_DETECTOR = "WEIGHTS/yolov8n.pt"
 RUTA_CLASIFICADOR = "WEIGHTS/best.pt"
+RUTA_VERIFICADOR = "WEIGHTS/yolo11s.pt"
 
 print("Cargando modelos de IA...")
 detector_perros = YOLO(RUTA_DETECTOR)
 clasificador_emociones = YOLO(RUTA_CLASIFICADOR)
+# modelo para verificación de perro
+detector_verificacion = YOLO(RUTA_VERIFICADOR)
 print("Modelos cargados y listos")
 
-# Inyectar los modelos en el endpoint de predicción
+# Inyectar los modelos en los endpoints
 endpoint_predict.set_models(detector_perros, clasificador_emociones)
+endpoint_verificacion_perro.set_model(detector_verificacion)
 
 # Registrar routers
 app.include_router(endpoint_root.router)
@@ -51,3 +56,4 @@ app.include_router(endpoint_mascotas_registro.router)
 app.include_router(endpoint_mascotas_perfil.router)
 app.include_router(endpoint_mascotas_historial.router)
 app.include_router(endpoint_mascotas_analisis.router)
+app.include_router(endpoint_verificacion_perro.router)
