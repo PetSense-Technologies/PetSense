@@ -17,7 +17,8 @@ from API import (
     endpoint_mascotas_historial,
     endpoint_mascotas_analisis,
     endpoint_verificacion_perro,
-    endpoint_crear_perfil
+    endpoint_crear_perfil,
+    endpoint_verificar_identidad
 )
 
 # Crear tablas en la base de datos
@@ -66,3 +67,4 @@ app.include_router(endpoint_mascotas_historial.router)
 app.include_router(endpoint_mascotas_analisis.router)
 app.include_router(endpoint_verificacion_perro.router)
 app.include_router(endpoint_crear_perfil.router)
+app.include_router(endpoint_verificar_identidad.router)
