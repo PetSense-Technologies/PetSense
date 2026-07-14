@@ -1,5 +1,5 @@
 // Conexión global usando variables de entorno de Expo (EXPO_PUBLIC_*)
-const rawUrl = process.env.EXPO_PUBLIC_API_URL || "https://petsense-production.up.railway.app";
+const rawUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8000";
 let cleanUrl = rawUrl.trim();
 
 // Si la URL no empieza con http:// o https:// (por ejemplo, si es una IP local), se le agrega http://

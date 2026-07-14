@@ -68,8 +68,8 @@ export default function RegistroScreen({ navigation }) {
 
             Alert.alert('¡Éxito!', `Se registró a ${nombreMascota} correctamente`);
 
-            // Avanzamos al Menu Principal para romper el estancamiento de forma fluida
-            navigation.navigate('MenuPrincipal');
+            // Avanzamos a la pantalla de crear perfil para la captura de fotos
+            navigation.navigate('CrearPerfil');
 
         } catch (error) {
             Alert.alert('Error en registro', error.message || 'No se pudo conectar con el servidor.');
