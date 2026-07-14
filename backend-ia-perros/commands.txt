@@ -17,3 +17,5 @@ DATABASE_URL=postgresql://postgres.user:password@aws-1-us-east-1.pooler.supabase
 
 ---Test conexion a base de datos---
 uvicorn main:app --reload
+
+python -m venv .venv; .\.venv\Scripts\Activate.ps1; uvicorn main:app --reload
