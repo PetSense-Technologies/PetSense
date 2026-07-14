@@ -15,6 +15,14 @@ class Mascota(Base):
     racha_actual = Column(Integer, default=0)
     ultima_racha_update = Column(Date)
     fecha_registro = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Perfil Biométrico
+    embedding_identidad = Column(Text)
+    vista_frontal = Column(Text)
+    lado_izq = Column(Text)
+    lado_der = Column(Text)
+    vista_3_4 = Column(Text)
+    vista_superior = Column(Text)
 
     dueno = relationship("Dueno", back_populates="mascotas")
     escaneos = relationship("HistorialEscaneo", back_populates="mascota")
